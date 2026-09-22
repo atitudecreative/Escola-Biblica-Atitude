@@ -1,0 +1,304 @@
+@import "tailwindcss";
+
+/*
+ * ─── Design System · Escola Bíblica Atitude ───────────────────────────────
+ * Tokens semânticos em CSS custom properties. Componentes usam apenas os
+ * tokens (bg-surface, text-muted, border-border...) — nunca cores cruas —
+ * para que tema claro/escuro e a cor da marca (definida no CMS em
+ * /admin/settings) funcionem em toda a interface.
+ *
+ * --brand e --brand-accent são injetados pelo layout raiz a partir das
+ * configurações; os demais tons são derivados com color-mix().
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --brand: #1f5b4b;
+  --brand-accent: #b7832f;
+
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --surface-2: #f3f2ed;
+  --surface-3: #eae8e1;
+  --border: #e4e2da;
+  --border-strong: #d2cfc5;
+  --fg: #1b1a17;
+  --muted: #5d5b54;
+  --subtle: #8b8980;
+
+  --primary: var(--brand);
+  --primary-hover: color-mix(in oklab, var(--brand) 86%, black);
+  --primary-fg: #ffffff;
+  --primary-soft: color-mix(in oklab, var(--brand) 9%, white);
+  --primary-soft-fg: color-mix(in oklab, var(--brand) 88%, black);
+
+  --accent: var(--brand-accent);
+  --accent-soft: color-mix(in oklab, var(--brand-accent) 13%, white);
+  --accent-soft-fg: color-mix(in oklab, var(--brand-accent) 70%, black);
+
+  --success: #1d7a4e;
+  --success-soft: #e6f3ec;
+  --warning: #a86200;
+  --warning-soft: #fbf0dc;
+  --danger: #c0392f;
+  --danger-soft: #fbe9e7;
+  --info: #2560a4;
+  --info-soft: #e7eff9;
+
+  --ring: color-mix(in oklab, var(--brand) 55%, transparent);
+  --overlay: rgb(20 19 16 / 0.45);
+
+  --shadow-xs: 0 1px 2px rgb(20 19 16 / 0.05);
+  --shadow-sm: 0 1px 3px rgb(20 19 16 / 0.06), 0 1px 2px -1px rgb(20 19 16 / 0.06);
+  --shadow-md: 0 6px 20px -6px rgb(20 19 16 / 0.12), 0 2px 6px -2px rgb(20 19 16 / 0.06);
+  --shadow-lg: 0 18px 48px -12px rgb(20 19 16 / 0.22), 0 4px 12px -4px rgb(20 19 16 / 0.08);
+
+  --font-display-family: "Fraunces Variable", ui-serif, Georgia, serif;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0d0e0d;
+  --surface: #141615;
+  --surface-2: #1a1c1b;
+  --surface-3: #222524;
+  --border: #252827;
+  --border-strong: #353937;
+  --fg: #ecebe6;
+  --muted: #a4a59f;
+  --subtle: #75776f;
+
+  --primary: color-mix(in oklab, var(--brand) 62%, white);
+  --primary-hover: color-mix(in oklab, var(--brand) 52%, white);
+  --primary-fg: #0d0e0d;
+  --primary-soft: color-mix(in oklab, var(--brand) 22%, #141615);
+  --primary-soft-fg: color-mix(in oklab, var(--brand) 45%, white);
+
+  --accent: color-mix(in oklab, var(--brand-accent) 80%, white);
+  --accent-soft: color-mix(in oklab, var(--brand-accent) 18%, #141615);
+  --accent-soft-fg: color-mix(in oklab, var(--brand-accent) 55%, white);
+
+  --success: #4cc38a;
+  --success-soft: #11291d;
+  --warning: #e9a441;
+  --warning-soft: #2e2210;
+  --danger: #f0776c;
+  --danger-soft: #331614;
+  --info: #72a9ea;
+  --info-soft: #132338;
+
+  --ring: color-mix(in oklab, var(--brand) 70%, white);
+  --overlay: rgb(0 0 0 / 0.6);
+
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.45);
+  --shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  --shadow-lg: 0 20px 50px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.04);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-fg: var(--primary-fg);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-fg: var(--primary-soft-fg);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-fg: var(--accent-soft-fg);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
+
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-display-family);
+
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-fade-in: fade-in 180ms var(--ease-out-soft);
+  --animate-fade-out: fade-out 140ms ease-in;
+  --animate-scale-in: scale-in 180ms var(--ease-out-soft);
+  --animate-slide-up: slide-up 220ms var(--ease-out-soft);
+  --animate-slide-in-left: slide-in-left 240ms var(--ease-out-soft);
+  --animate-slide-in-right: slide-in-right 240ms var(--ease-out-soft);
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes fade-out { from { opacity: 1 } to { opacity: 0 } }
+  @keyframes scale-in { from { opacity: 0; transform: scale(0.97) translateY(4px) } to { opacity: 1; transform: none } }
+  @keyframes slide-up { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+  @keyframes slide-in-left { from { transform: translateX(-100%) } to { transform: none } }
+  @keyframes slide-in-right { from { transform: translateX(100%) } to { transform: none } }
+  @keyframes shimmer { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+}
+
+/* ─── Tipografia ─────────────────────────────────────────────── */
+@utility text-display {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 1.6rem + 2.6vw, 3.75rem);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  font-weight: 500;
+  font-variation-settings: "opsz" 96;
+}
+@utility text-h1 {
+  font-size: 1.75rem;
+  line-height: 2.25rem;
+  letter-spacing: -0.022em;
+  font-weight: 650;
+}
+@utility text-h2 {
+  font-size: 1.375rem;
+  line-height: 1.875rem;
+  letter-spacing: -0.018em;
+  font-weight: 620;
+}
+@utility text-h3 {
+  font-size: 1.0625rem;
+  line-height: 1.5rem;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+@utility text-h4 {
+  font-size: 0.9375rem;
+  line-height: 1.375rem;
+  font-weight: 600;
+}
+@utility text-body {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+@utility text-small {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+@utility text-caption {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.01em;
+}
+@utility text-overline {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+@utility font-display {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 72;
+}
+
+/* ─── Base ─────────────────────────────────────────────── */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv11", "ss01";
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--brand) 22%, transparent);
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--subtle);
+  }
+  /* Scrollbars discretas */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Skeleton */
+@utility skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: var(--animate-shimmer);
+  border-radius: var(--radius-md);
+}
+
+/* Conteúdo rico (Markdown) */
+@utility prose-content {
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: var(--fg);
+  & > * + * { margin-top: 0.9em; }
+  & h1, & h2 { font-size: 1.3rem; font-weight: 650; letter-spacing: -0.015em; margin-top: 1.6em; line-height: 1.3; }
+  & h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1.4em; }
+  & a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+  & ul { list-style: disc; padding-left: 1.3em; }
+  & ol { list-style: decimal; padding-left: 1.3em; }
+  & li + li { margin-top: 0.3em; }
+  & blockquote { border-left: 3px solid var(--accent); padding: 0.2em 0 0.2em 1em; color: var(--muted); font-family: var(--font-display); font-size: 1.05rem; font-style: italic; }
+  & code { background: var(--surface-2); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.875em; }
+  & pre { background: var(--surface-2); padding: 1em; border-radius: var(--radius-lg); overflow-x: auto; }
+  & hr { border-color: var(--border); }
+  & table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  & th, & td { border: 1px solid var(--border); padding: 0.5em 0.75em; text-align: left; }
+  & strong { font-weight: 620; }
+}
