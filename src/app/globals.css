@@ -55,6 +55,15 @@
   --shadow-lg: 0 18px 48px -12px rgb(20 19 16 / 0.22), 0 4px 12px -4px rgb(20 19 16 / 0.08);
 
   --font-display-family: "Fraunces Variable", ui-serif, Georgia, serif;
+
+  /* Dados — paleta categórica validada (CVD/contraste) com scripts de dataviz */
+  --series-1: #138a68;
+  --series-2: #d08a2c;
+  --series-3: #2a78d6;
+  --series-4: #e87ba4;
+  --series-5: #4a3aa7;
+  --chart-grid: #ebe9e2;
+  --chart-axis: #8b8980;
   color-scheme: light;
 }
 
@@ -95,6 +104,14 @@
   --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.45);
   --shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.6);
   --shadow-lg: 0 20px 50px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.04);
+
+  --series-1: #16a37a;
+  --series-2: #c08026;
+  --series-3: #3987e5;
+  --series-4: #d55181;
+  --series-5: #9085e9;
+  --chart-grid: #232625;
+  --chart-axis: #75776f;
   color-scheme: dark;
 }
 
