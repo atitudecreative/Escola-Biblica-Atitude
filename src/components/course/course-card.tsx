@@ -18,7 +18,7 @@ export type CourseCardData = {
   ratingAvg: number;
   ratingCount: number;
   enrollmentCount?: number;
-  category?: { name: string } | null;
+  category?: { name: string; position?: number } | null;
   instructor: { name: string };
   progress?: number | null; // se matriculado
   completed?: boolean;
@@ -35,7 +35,7 @@ export function CourseCard({ course, className, href }: { course: CourseCardData
       )}
     >
       <div className="relative overflow-hidden">
-        <CourseCover title={course.title} category={course.category?.name} src={course.coverUrl} className="transition-transform duration-500 group-hover:scale-[1.02]" />
+        <CourseCover title={course.title} category={course.category?.name} tone={course.category?.position} src={course.coverUrl} className="transition-transform duration-500 group-hover:scale-[1.02]" />
         {course.completed && (
           <Badge tone="success" className="absolute top-3 left-3 bg-surface/95">
             Concluído

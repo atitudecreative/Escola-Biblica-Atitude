@@ -9,6 +9,7 @@ export type TemplateData = {
   announcement: { name: string; title: string; body: string; url: string };
   "certificate-issued": { name: string; course: string; url: string };
   "assignment-graded": { name: string; assignment: string; status: string; url: string };
+  "account-invite": { name: string; url: string };
 };
 export type EmailTemplate = keyof TemplateData;
 
@@ -64,6 +65,13 @@ const templates = build({
     heading: `Olá, ${d.name}`,
     paragraphs: [`Sua atividade "${d.assignment}" foi corrigida. Status: ${d.status}.`],
     cta: { label: "Ver correção", url: d.url },
+  }),
+  "account-invite": (d) => ({
+    subject: "Sua conta na Escola foi criada",
+    heading: `Olá, ${d.name}`,
+    paragraphs: ["A secretaria criou uma conta para você na plataforma. Para começar, defina sua senha de acesso."],
+    cta: { label: "Definir minha senha", url: d.url },
+    note: "O link expira em 72 horas e só pode ser usado uma vez. Se você não esperava este e-mail, ignore-o.",
   }),
 });
 

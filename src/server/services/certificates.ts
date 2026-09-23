@@ -106,11 +106,40 @@ function wrap(text: string, font: PDFFont, size: number, maxWidth: number) {
   return lines;
 }
 
-export async function renderCertificatePdf(code: string) {
-  const cert = await getCertificateByCode(code);
-  if (!cert) return null;
+export type CertificateTemplateData = {
+  heading: string;
+  body: string;
+  signatureName: string;
+  signatureRole: string;
+  accentColor: string;
+};
+
+type CertificateDrawData = {
+  code: string;
+  studentName: string;
+  courseTitle: string;
+  instructorName: string;
+  workloadHours: number;
+  issuedAt: Date;
+  revokedAt?: Date | null;
+};
+
+/** Aplica os placeholders do modelo ({{aluno}} {{curso}} {{carga}} {{data}} {{professor}}). */
+export function fillCertificateBody(body: string, d: Omit<CertificateDrawData, "code">) {
+  return body
+    .replaceAll("{{aluno}}", d.studentName)
+    .replaceAll("{{curso}}", d.courseTitle)
+    .replaceAll("{{carga}}", String(d.workloadHours))
+    .replaceAll("{{data}}", formatDate(d.issuedAt))
+    .replaceAll("{{professor}}", d.instructorName);
+}
+
+async function drawCertificatePdf(
+  cert: CertificateDrawData,
+  template: CertificateTemplateData | null,
+  opts: { watermark?: string } = {},
+) {
   const general = await getSettings("general");
-  const template = cert.template ?? (await db.certificateTemplate.findFirst({ where: { isDefault: true } }));
   const accent = hexToRgb(template?.accentColor ?? "#1F5B4B");
   const ink = rgb(0.11, 0.1, 0.09);
   const muted = rgb(0.4, 0.39, 0.36);
@@ -139,12 +168,10 @@ export async function renderCertificatePdf(code: string) {
   center(cert.studentName, height - 236, serifItalic, 34);
   page.drawLine({ start: { x: width / 2 - 170, y: height - 250 }, end: { x: width / 2 + 170, y: height - 250 }, thickness: 0.6, color: accent });
 
-  const body = (template?.body ?? "concluiu o curso {{curso}}, com carga horária de {{carga}} horas, em {{data}}.")
-    .replaceAll("{{aluno}}", cert.studentName)
-    .replaceAll("{{curso}}", cert.courseTitle)
-    .replaceAll("{{carga}}", String(cert.workloadHours))
-    .replaceAll("{{data}}", formatDate(cert.issuedAt))
-    .replaceAll("{{professor}}", cert.instructorName);
+  const body = fillCertificateBody(
+    template?.body ?? "concluiu o curso {{curso}}, com carga horária de {{carga}} horas, em {{data}}.",
+    cert,
+  );
   wrap(body, sans, 13, 560).forEach((line, i) => center(line, height - 288 - i * 20, sans, 13, ink));
 
   // Assinaturas
@@ -166,8 +193,40 @@ export async function renderCertificatePdf(code: string) {
   page.drawText(url.replace(/^https?:\/\//, ""), { x: width - 150, y: 42, font: sans, size: 6, color: muted });
   page.drawText(`Código: ${cert.code}`, { x: 60, y: 52, font: sansBold, size: 9, color: accent });
   page.drawText(`Emitido em ${formatDate(cert.issuedAt)}`, { x: 60, y: 40, font: sans, size: 8, color: muted });
-  if (cert.revokedAt) {
-    page.drawText("REVOGADO", { x: width / 2 - 120, y: height / 2 - 30, font: sansBold, size: 64, color: rgb(0.75, 0.2, 0.18), opacity: 0.25 });
+  const mark = cert.revokedAt ? "REVOGADO" : opts.watermark;
+  if (mark) {
+    const size = 64;
+    page.drawText(mark, {
+      x: (width - sansBold.widthOfTextAtSize(mark, size)) / 2,
+      y: height / 2 - 30,
+      font: sansBold,
+      size,
+      color: cert.revokedAt ? rgb(0.75, 0.2, 0.18) : muted,
+      opacity: cert.revokedAt ? 0.25 : 0.14,
+    });
   }
-  return { bytes: await pdf.save(), cert };
+  return pdf.save();
+}
+
+export async function renderCertificatePdf(code: string) {
+  const cert = await getCertificateByCode(code);
+  if (!cert) return null;
+  const template = cert.template ?? (await db.certificateTemplate.findFirst({ where: { isDefault: true } }));
+  return { bytes: await drawCertificatePdf(cert, template), cert };
+}
+
+/** PDF de exemplo de um modelo (dados fictícios + marca d'água "EXEMPLO"). */
+export async function renderCertificatePreviewPdf(template: CertificateTemplateData) {
+  return drawCertificatePdf(
+    {
+      code: "EBA-0000-EXEM-PLO0",
+      studentName: "Maria Aparecida Souza",
+      courseTitle: "Panorama do Antigo Testamento",
+      instructorName: "Pr. João Almeida",
+      workloadHours: 20,
+      issuedAt: new Date(),
+    },
+    template,
+    { watermark: "EXEMPLO" },
+  );
 }

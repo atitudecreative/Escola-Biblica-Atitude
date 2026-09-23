@@ -22,9 +22,12 @@ export function CourseCover({
   src,
   className,
   size = "md",
+  tone,
 }: {
   title: string;
   category?: string | null;
+  /** Índice de paleta (ex.: posição da categoria) — cursos da mesma área compartilham cor. */
+  tone?: number | null;
   src?: string | null;
   className?: string;
   size?: "sm" | "md" | "lg";
@@ -38,7 +41,7 @@ export function CourseCover({
     );
   }
   const h = hashString(title);
-  const p = PALETTES[h % PALETTES.length];
+  const p = PALETTES[(tone ?? h) % PALETTES.length];
   const variant = (h >> 4) % 3;
   const words = title.split(" ");
   const titleSize = { sm: "text-[0.95rem]", md: "text-[1.35rem]", lg: "text-[2rem] sm:text-[2.4rem]" }[size];

@@ -12,10 +12,11 @@ export function DropdownMenuContent({
   className,
   align = "end",
   sideOffset = 6,
+  container,
   ...props
-}: React.ComponentProps<typeof M.Content>) {
+}: React.ComponentProps<typeof M.Content> & { container?: HTMLElement | null }) {
   return (
-    <M.Portal>
+    <M.Portal container={container ?? undefined}>
       <M.Content
         align={align}
         sideOffset={sideOffset}

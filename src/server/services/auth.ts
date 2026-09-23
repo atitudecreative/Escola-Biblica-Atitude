@@ -98,6 +98,17 @@ export async function requestPasswordReset(email: string) {
   await audit("auth.password_reset_requested", { actorId: user.id, entityType: "user", entityId: user.id });
 }
 
+/**
+ * Envia, a pedido da administração, um link de definição de senha
+ * (token PASSWORD_RESET). "invite" é usado ao criar a conta (validade maior).
+ */
+export async function sendPasswordLink(user: { id: string; email: string; name: string }, kind: "reset" | "invite" = "reset") {
+  const token = await issueToken(user.id, "PASSWORD_RESET", kind === "invite" ? 72 * HOUR : HOUR);
+  const data = { name: user.name.split(" ")[0], url: `/reset-password?token=${token}` };
+  if (kind === "invite") await sendEmail(user.email, "account-invite", data);
+  else await sendEmail(user.email, "password-reset", data);
+}
+
 export async function resetPassword(token: string, password: string) {
   await rateLimit("reset:confirm", 10, HOUR);
   const record = await consumeToken(token, "PASSWORD_RESET");
