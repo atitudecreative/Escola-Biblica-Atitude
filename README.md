@@ -138,7 +138,7 @@ O `render.yaml` na raiz cria o serviço web com disco persistente para uploads; 
 **Render**
 1. **New → Blueprint** → selecione este repositório (branch `main`).
 2. Preencha `DATABASE_URL` (string do Supabase acima), `ADMIN_EMAIL` e `ADMIN_PASSWORD` (mín. 8 caracteres, com letra e número). `APP_URL` só é necessário com domínio próprio (sem ele, usa a URL `.onrender.com`); `RESEND_API_KEY` só para envio real de e-mails.
-3. **Apply**. A cada deploy o pre-deploy roda `prisma migrate deploy` e `npm run db:bootstrap`.
+3. **Apply**. A cada deploy o build aplica as migrações (`prisma migrate deploy`, antes do `next build`, que pré-renderiza páginas lendo o banco) e o pre-deploy roda `npm run db:bootstrap`.
 4. Após o primeiro login, remova `ADMIN_PASSWORD` do ambiente.
 
 Disco e pre-deploy exigem plano pago do serviço web. Para usar o Postgres do próprio Render, veja o bloco comentado no `render.yaml`. Nunca rode `db:seed` em produção.
