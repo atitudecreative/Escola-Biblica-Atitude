@@ -31,6 +31,9 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@node-rs/argon2"],
   experimental: {
     serverActions: { bodySizeLimit: "4mb" },
+    // O build pré-renderiza páginas que leem o banco; cada worker abre conexões próprias.
+    // Poucos workers mantêm o total dentro do limite de poolers (ex.: Supabase, 15 clientes).
+    cpus: Number(process.env.NEXT_BUILD_CPUS) || 2,
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
