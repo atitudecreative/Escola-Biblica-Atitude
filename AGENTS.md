@@ -42,3 +42,4 @@ Tokens (use só estes): `bg-bg bg-surface bg-surface-2 bg-surface-3 border-borde
 ## Verificação
 `npx tsc --noEmit` · `npx eslint <arquivos>` · dados demo: `npm run db:seed` (senha `Demo@2026`: aluno@ / professor@ / gestor@ / admin@demo.eba).
 QA visual: `CHROME=/opt/pw-browsers/chromium node scripts/shot.mjs <aluno|professor|gestor|admin|-> /tmp/claude-0/shots/<nome> /rota1 /rota2` (env W/H, THEME=dark, FULL=1).
+QA automatizado (servidor rodando em :3000): `node scripts/qa/crawl.mjs [aluno professor gestor admin]` (todas as rotas da navegação, desktop + 390px: status, erros de console, overflow) · `node scripts/qa/auth-flow.mjs` (cadastro → recuperação → redefinição → login) · `scripts/qa/player.mjs`, `quiz.mjs`, `search.mjs`. Testes unitários: `npm test`.

@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Escola Bíblica Atitude — Plataforma EAD
 
-## Getting Started
+Plataforma de ensino a distância (LMS) da Igreja Batista Atitude: cursos com módulos e aulas, player próprio, avaliações, atividades com correção, certificados validáveis por QR Code, comunicação entre alunos, professores e gestão, comunidade, relatórios e um painel administrativo com CMS.
 
-First, run the development server:
+> Tudo que aparece na interface funciona de verdade. Integrações externas que ainda não estão configuradas (gateway de pagamento, login social, WhatsApp, S3) estão **preparadas na arquitetura e sinalizadas como “não configurado”** — nenhuma finge funcionar.
+
+---
+
+## Início rápido
+
+Pré-requisitos: **Node.js 20.9+** e **PostgreSQL 14+** (com as extensões `unaccent` e `pg_trgm`, que vêm no pacote padrão).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env            # ajuste DATABASE_URL e SESSION_SECRET
+npm install
+npx prisma migrate deploy       # cria as tabelas
+npm run db:seed                 # dados de demonstração (apaga o banco!)
+npm run dev                     # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Contas de demonstração
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Senha de todas: `Demo@2026` (defina `DEMO_MODE="true"` para exibi-las na tela de login).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Perfil | E-mail | O que ver |
+|---|---|---|
+| Aluno | `aluno@demo.eba` | Dashboard, player, avaliações, certificados, mensagens |
+| Professor | `professor@demo.eba` | Painel do professor, construtor de cursos, correções |
+| Gestor | `gestor@demo.eba` | Indicadores, relatórios, alunos e professores |
+| Administrador | `admin@demo.eba` | Tudo, incluindo CMS, permissões e logs |
 
-## Learn More
+Certificado de exemplo para validação pública: `/certificate/EBA-2026-DEMO-7K3P`.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Stack e decisões
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Camada | Escolha | Por quê |
+|---|---|---|
+| Framework | **Next.js 16** (App Router, React 19, Turbopack) | SSR/SEO na área pública, Server Components e Server Actions reduzem API boilerplate |
+| Linguagem | TypeScript estrito | Tipos de ponta a ponta (Prisma → serviços → UI) |
+| Banco | **PostgreSQL + Prisma 6** | Modelo relacional rico (~50 tabelas), migrações versionadas |
+| UI | Tailwind CSS v4 + Radix UI + design system próprio | Acessibilidade dos primitivos Radix, visual 100% próprio via tokens |
+| Validação | Zod (compartilhado cliente/servidor) | Uma única fonte de regras |
+| Gráficos | Recharts com paleta validada (daltonismo/contraste) | |
+| Auth | Sessões próprias em banco + Argon2id | Controle total (revogação, sessões ativas, "lembrar acesso") sem dependência externa |
 
-## Deploy on Vercel
+Monólito modular: a separação de camadas permite extrair serviços no futuro sem reescrever a UI.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+  app/
+    (public)/      site: home, catálogo, página do curso, professor, validação de certificado
+    (auth)/        login, cadastro, recuperação/redefinição de senha, verificação de e-mail
+    (app)/         área logada (AppShell): aluno, professor (/teacher), gestor (/manager), admin (/admin)
+    learn/         player imersivo de aulas
+    api/           uploads, arquivos (com Range), PDF de certificado, exportações CSV
+  server/          só servidor: auth, guards, serviços de domínio, e-mail, storage, settings, auditoria
+  components/      ui/ (design system), layout/, course/, charts/, data/, learn/, ...
+  lib/             isomórfico: permissões, rótulos, formatação pt-BR, validações
+prisma/            schema, migrações e seed
+scripts/           QA visual e testes end-to-end (Playwright)
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Convenções detalhadas para quem for desenvolver: **[AGENTS.md](./AGENTS.md)**.
+
+---
+
+## Funcionalidades
+
+**Aluno** — dashboard personalizado (continuar de onde parou, indicadores, sequência de estudo, próximas atividades, recomendações, conquistas), catálogo com busca e filtros, página do curso completa, player com velocidade/legendas/PiP/tela cheia/atalhos e retomada, conclusão automática e liberação sequencial, materiais, comentários, avaliações (5 tipos de questão, tempo, tentativas, feedback), atividades com envio de arquivo, certificados em PDF com QR Code, favoritos, mensagens, notificações, comunidade, perfil e preferências.
+
+**Professor** — painel com métricas e gráficos, construtor de cursos com arrastar-e-soltar (mouse, toque e teclado), editor de aulas de 9 tipos, editor de questionários e atividades, envio para revisão/publicação, alunos por curso, fila de correção, comunicados para turmas.
+
+**Gestor** — indicadores com filtro de período e comparação com período anterior, 10 relatórios com gráficos, tabela e exportação CSV (compatível com Excel), impressão/PDF, alunos e professores com páginas individuais.
+
+**Administrador** — usuários (criar, editar perfis, bloquear, redefinir senha, ações em massa), cursos (fila de revisão, publicação em massa, destaques), categorias e tags, banners e home (CMS), certificados (modelos, revogação, emissão manual), configurações (marca, cores com checagem de contraste, tema, regras, segurança, integrações e webhooks reais), matriz de permissões (RBAC granular + perfis personalizados), logs de auditoria, caixa de saída de e-mails e entregas de webhook.
+
+**Transversal** — busca global agrupada (⌘K) que ignora acentos, dark mode com preferência do sistema, layouts responsivos reais (drawer, barra inferior no celular, listas no lugar de tabelas), estados de loading/vazio/erro/sucesso em todas as telas, gamificação (XP, níveis, conquistas, sequência), SEO (metadata, Open Graph, JSON-LD, sitemap, robots), manifesto PWA.
+
+---
+
+## Segurança
+
+- Senhas com **Argon2id**; tokens (sessão, reset, verificação) guardados apenas como hash SHA-256.
+- Cookies `httpOnly`, `SameSite=Lax`, `Secure` em produção; sessões revogáveis; troca/redefinição de senha encerra as outras sessões.
+- **Autorização sempre no servidor** (guards + serviços); a UI apenas esconde o que o usuário não pode fazer.
+- Server Actions com checagem de origem nativa; Route Handlers mutáveis exigem `Origin` válido (CSRF).
+- Rate limiting em login, cadastro, recuperação de senha, uploads, mensagens e comunidade.
+- Uploads com lista de tipos por finalidade, verificação de assinatura binária (magic bytes), limite de tamanho e SVG sem scripts; arquivos privados servidos só com vínculo (matrícula, autoria, participação na conversa).
+- Markdown renderizado sem HTML bruto (proteção contra XSS); links externos com `rel="noopener noreferrer nofollow"`.
+- CSP, HSTS, `X-Frame-Options`, `nosniff`, `Referrer-Policy` e `Permissions-Policy` configurados em `next.config.ts`.
+- Prevenção de enumeração de contas (mesma resposta e tempo) e de open redirect (`?next=`).
+- Exportações CSV protegidas contra injeção de fórmula; auditoria de ações sensíveis.
+- Segredos apenas em variáveis de ambiente, validadas na inicialização (`src/server/env.ts`).
+
+## Observabilidade
+
+Logs estruturados em JSON (`src/server/logger.ts`) com categoria **user / app / infra**, prontos para qualquer agregador. Trilha de auditoria em `audit_logs`, caixa de saída de e-mails (`email_outbox`) e histórico de webhooks, todos visíveis em **Admin › Logs**.
+
+## Integrações
+
+| Integração | Estado |
+|---|---|
+| E-mail | **Funcional**: `EMAIL_PROVIDER=log` (grava e não envia), `resend` ou `smtp` |
+| Webhooks | **Funcional**: endpoints com assinatura HMAC-SHA256 (`X-EBA-Signature`) em Admin › Configurações › Integrações |
+| Google Analytics 4 / Meta Pixel | **Funcional**: informe os IDs no admin |
+| Armazenamento | Disco local; interface `StorageDriver` pronta para S3/R2/GCS |
+| Pagamentos | Modelo (`orders`, `coupons`, preço do curso) pronto; sem gateway — cursos pagos mostram "inscrição indisponível" |
+| Login Google/Microsoft | Tabela `oauth_accounts` pronta; provedores não ativados |
+| WhatsApp, push, offline | Preparado (notificações por canal, manifesto PWA); não implementado |
+
+## Scripts
+
+| Comando | O que faz |
+|---|---|
+| `npm run dev` | Servidor de desenvolvimento |
+| `npm run build` / `npm start` | Build e servidor de produção |
+| `npm run typecheck` · `npm run lint` · `npm test` | Tipos, lint e testes unitários |
+| `npm run db:migrate` | Aplica migrações (produção) |
+| `npm run db:seed` | Recria os dados de demonstração |
+| `node scripts/qa/crawl.mjs` | QA automatizado de todas as rotas por perfil (desktop + mobile) |
+
+## Deploy
+
+1. PostgreSQL gerenciado com permissão para `CREATE EXTENSION unaccent, pg_trgm` (ou crie-as previamente).
+2. Configure as variáveis do `.env.example` (nunca use `DEMO_MODE` ou `RATE_LIMIT_RELAXED` em produção).
+3. `npm ci && npm run db:migrate && npm run build && npm start`.
+4. Para mais de uma instância: troque o armazenamento local por um driver S3 e o rate limit em memória por Redis (as interfaces já existem em `src/server/storage` e `src/server/rate-limit.ts`).

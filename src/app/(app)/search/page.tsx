@@ -29,7 +29,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
           {groups.map((g) => {
             const I = ICON[g.key];
             return (
-              <section key={g.key}>
+              <section key={g.key} className="min-w-0">
                 <h2 className="mb-3 flex items-center gap-2 text-h4"><I className="size-4 text-subtle" /> {g.label} <span className="text-subtle">({g.items.length})</span></h2>
                 <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
                   {g.items.map((it) => (

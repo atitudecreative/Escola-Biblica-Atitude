@@ -12,13 +12,9 @@ type Ctx = { ids: string[]; selected: Set<string>; toggle: (id: string) => void;
 const C = React.createContext<Ctx | null>(null);
 
 export function BulkSelectProvider({ ids, children }: { ids: string[]; children: React.ReactNode }) {
-  const [selected, setSelected] = React.useState<Set<string>>(new Set());
-  const key = ids.join(",");
-  // Mantém apenas IDs presentes na página atual (após filtrar/paginar).
-  React.useEffect(() => {
-    setSelected((s) => new Set([...s].filter((id) => ids.includes(id))));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  const [raw, setSelected] = React.useState<Set<string>>(new Set());
+  // Considera apenas IDs presentes na página atual (após filtrar/paginar).
+  const selected = React.useMemo(() => new Set([...raw].filter((id) => ids.includes(id))), [raw, ids]);
   const value: Ctx = {
     ids,
     selected,

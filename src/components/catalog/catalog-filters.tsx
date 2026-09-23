@@ -18,7 +18,10 @@ function useFilters() {
   const [pending, start] = useTransition();
   const set = (patch: Record<string, string | null>) => {
     const sp = new URLSearchParams(params.toString());
-    for (const [k, v] of Object.entries(patch)) (v ? sp.set(k, v) : sp.delete(k));
+    for (const [k, v] of Object.entries(patch)) {
+      if (v) sp.set(k, v);
+      else sp.delete(k);
+    }
     sp.delete("page");
     start(() => router.replace(`${pathname}?${sp.toString()}`, { scroll: false }));
   };

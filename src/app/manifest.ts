@@ -1,3 +1,6 @@
+// Revalida para refletir mudanças de marca feitas no admin.
+export const revalidate = 3600;
+
 import type { MetadataRoute } from "next";
 import { getSettings } from "@/server/settings";
 

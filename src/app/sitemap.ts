@@ -1,3 +1,6 @@
+// Revalida a cada hora: novos cursos entram no sitemap sem novo deploy.
+export const revalidate = 3600;
+
 import type { MetadataRoute } from "next";
 import { db } from "@/server/db";
 import { env } from "@/server/env";
