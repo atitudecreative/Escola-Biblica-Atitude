@@ -247,7 +247,7 @@ export function BarList({
   slot = 1,
   empty = "Sem dados",
 }: {
-  items: { label: string; value: number; href?: string; hint?: string }[];
+  items: { id?: string; label: string; value: number; href?: string; hint?: string }[];
   format?: (n: number) => string;
   slot?: 1 | 2 | 3 | 4 | 5;
   empty?: string;
@@ -256,8 +256,8 @@ export function BarList({
   if (!items.length) return <p className="py-8 text-center text-small text-subtle">{empty}</p>;
   return (
     <ul className="space-y-3">
-      {items.map((it) => (
-        <li key={it.label} title={`${it.label}: ${format(it.value)}`}>
+      {items.map((it, i) => (
+        <li key={it.id ?? `${i}-${it.label}`} title={`${it.label}: ${format(it.value)}`}>
           <div className="mb-1 flex items-baseline justify-between gap-3 text-small">
             {it.href ? (
               <a href={it.href} className="truncate text-fg hover:text-primary">{it.label}</a>

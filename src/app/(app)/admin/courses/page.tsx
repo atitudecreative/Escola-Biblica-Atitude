@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Clock, ExternalLink, Layers, PencilLine, Star } from "lucide-react";
+import { BookPlus, Clock, ExternalLink, Layers, PencilLine, Star } from "lucide-react";
 import { requirePermissionPage } from "@/server/auth/guards";
 import {
   ADMIN_COURSES_PAGE_SIZE,
@@ -63,11 +63,18 @@ export default async function AdminCoursesPage(props: PageProps<"/admin/courses"
         title="Cursos"
         description="Todos os cursos da plataforma: revise o que foi enviado pelos professores, publique, arquive e escolha os destaques da home."
         actions={
-          <Button variant="outline" asChild>
-            <Link href="/courses" target="_blank">
-              <ExternalLink /> Ver catálogo
-            </Link>
-          </Button>
+          <>
+            <Button variant="outline" asChild>
+              <Link href="/courses" target="_blank">
+                <ExternalLink /> Ver catálogo
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/teacher/courses/new">
+                <BookPlus /> Novo curso
+              </Link>
+            </Button>
+          </>
         }
       />
 
