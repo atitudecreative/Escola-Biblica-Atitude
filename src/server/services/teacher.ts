@@ -96,16 +96,16 @@ export async function teacherDashboard(user: SessionUser) {
   const ratingCount = rated.reduce((n, c) => n + c.ratingCount, 0);
   const ratingAvg = ratingCount ? rated.reduce((n, c) => n + c.ratingAvg * c.ratingCount, 0) / ratingCount : 0;
 
-  const quizMap = new Map<string, { label: string; course: string; sum: number; n: number; passed: number }>();
+  const quizMap = new Map<string, { id: string; label: string; course: string; sum: number; n: number; passed: number }>();
   for (const a of attempts) {
-    const q = quizMap.get(a.quiz.id) ?? { label: a.quiz.title, course: a.quiz.course.title, sum: 0, n: 0, passed: 0 };
+    const q = quizMap.get(a.quiz.id) ?? { id: a.quiz.id, label: a.quiz.title, course: a.quiz.course.title, sum: 0, n: 0, passed: 0 };
     q.sum += a.score ?? 0;
     q.n++;
     if (a.passed) q.passed++;
     quizMap.set(a.quiz.id, q);
   }
   const quizPerf = [...quizMap.values()]
-    .map((q) => ({ label: q.label, course: q.course, avg: Math.round(q.sum / q.n), passRate: Math.round((q.passed / q.n) * 100), attempts: q.n }))
+    .map((q) => ({ id: q.id, label: q.label, course: q.course, avg: Math.round(q.sum / q.n), passRate: Math.round((q.passed / q.n) * 100), attempts: q.n }))
     .sort((a, b) => b.attempts - a.attempts)
     .slice(0, 6);
   const quizAvg = attempts.length ? attempts.reduce((n, a) => n + (a.score ?? 0), 0) / attempts.length : null;

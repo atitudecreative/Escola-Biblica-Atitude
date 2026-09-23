@@ -43,7 +43,7 @@ export function CourseProgressChart({ data }: { data: { title: string; avgProgre
 }
 
 export function StudentsPerCourse({ data }: { data: { id: string; title: string; students: number }[] }) {
-  const items = data.slice(0, 8).map((d) => ({ label: d.title, value: d.students, href: `/teacher/courses/${d.id}?tab=students` }));
+  const items = data.slice(0, 8).map((d) => ({ id: d.id, label: d.title, value: d.students, href: `/teacher/courses/${d.id}?tab=students` }));
   return (
     <ChartFrame title="Alunos por curso" description="Matrículas ativas e concluídas" series={[{ key: "value", label: "Alunos" }]} data={items} xKey="label">
       <BarList items={items} format={(n) => formatNumber(n)} empty="Nenhum aluno matriculado ainda." />
@@ -51,8 +51,9 @@ export function StudentsPerCourse({ data }: { data: { id: string; title: string;
   );
 }
 
-export function QuizPerformance({ data }: { data: { label: string; course: string; avg: number; passRate: number; attempts: number }[] }) {
+export function QuizPerformance({ data }: { data: { id: string; label: string; course: string; avg: number; passRate: number; attempts: number }[] }) {
   const items = data.map((d) => ({
+    id: d.id,
     label: d.label,
     value: d.avg,
     hint: `${d.course} · ${formatNumber(d.attempts)} tentativa(s) · ${formatPercent(d.passRate)} de aprovação`,

@@ -47,7 +47,8 @@ export const NAV: NavSection[] = [
   },
   {
     title: "Ensino",
-    roles: ["teacher"],
+    // O admin também cria e edita cursos (tem courses.create/manage_any).
+    roles: ["teacher", "admin"],
     perms: ["courses.manage_own", "courses.create"],
     items: [
       { label: "Painel do professor", href: "/teacher", icon: "gauge", exact: true },
