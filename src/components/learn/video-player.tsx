@@ -8,7 +8,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { formatClock } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export type VideoSource = { src: string; label: string; type?: string };
+/** `alternates`: mesmos vídeo em outros formatos (ex.: WebM) — o navegador escolhe o primeiro que suporta. */
+export type VideoSource = { src: string; label: string; type?: string; alternates?: { src: string; type: string }[] };
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 const PREF_KEY = "eba.player";
@@ -83,9 +84,18 @@ export function VideoPlayer({
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [captionsUrl]);
 
+  // Metadados podem carregar antes da hidratação: sincroniza no mount.
+  useEffect(() => {
+    const v = video.current;
+    if (v && v.readyState >= 1 && Number.isFinite(v.duration)) setDuration(v.duration);
+  }, []);
+
   useEffect(() => {
     const track = video.current?.textTracks?.[0];
-    if (track) track.mode = captions ? "showing" : "hidden";
+    if (!track) return;
+    track.mode = captions ? "showing" : "hidden";
+    // Sobe as legendas para não ficarem atrás dos controles.
+    for (const cue of Array.from(track.cues ?? [])) (cue as VTTCue).line = -4;
   }, [captions, duration]);
 
   const flush = useCallback(() => {
@@ -188,19 +198,22 @@ export function VideoPlayer({
     const v = video.current;
     if (!v) return;
     const k = e.key.toLowerCase();
-    const handled = true;
+    const jump = (d: number) => {
+      seek(v.currentTime + d);
+      showFlash(`${d > 0 ? "+" : "−"}${Math.abs(d)}s`);
+    };
     if (k === " " || k === "k") toggle();
-    else if (k === "j") (seek(v.currentTime - 10), showFlash("−10s"));
-    else if (k === "l") (seek(v.currentTime + 10), showFlash("+10s"));
-    else if (k === "arrowleft") (seek(v.currentTime - 5), showFlash("−5s"));
-    else if (k === "arrowright") (seek(v.currentTime + 5), showFlash("+5s"));
+    else if (k === "j") jump(-10);
+    else if (k === "l") jump(10);
+    else if (k === "arrowleft") jump(-5);
+    else if (k === "arrowright") jump(5);
     else if (k === "arrowup") setVol(v.volume + 0.1);
     else if (k === "arrowdown") setVol(v.volume - 0.1);
     else if (k === "m") v.muted = !v.muted;
     else if (k === "f") void toggleFullscreen();
     else if (k === "c" && captionsUrl) toggleCaptions();
     else return;
-    if (handled) e.preventDefault();
+    e.preventDefault();
     poke();
   }
 
@@ -240,6 +253,7 @@ export function VideoPlayer({
           v.playbackRate = rate;
           if (startAt > 3 && startAt < v.duration - 5 && v.currentTime < 1) v.currentTime = startAt;
         }}
+        onDurationChange={(e) => Number.isFinite(e.currentTarget.duration) && setDuration(e.currentTarget.duration)}
         onTimeUpdate={(e) => {
           const v = e.currentTarget;
           setTime(v.currentTime);
@@ -275,6 +289,7 @@ export function VideoPlayer({
         onError={() => setError(true)}
       >
         <source src={sources[source]?.src} type={sources[source]?.type ?? "video/mp4"} />
+        {sources[source]?.alternates?.map((a) => <source key={a.src} src={a.src} type={a.type} />)}
         {captionsUrl && <track kind="subtitles" src={captionsUrl} srcLang="pt-BR" label="Português" default={false} />}
       </video>
 
@@ -349,7 +364,7 @@ export function VideoPlayer({
               value={muted ? 0 : volume}
               onChange={(e) => setVol(Number(e.target.value))}
               aria-label="Volume"
-              className="hidden w-0 accent-white transition-[width] group-hover/vol:w-20 focus:w-20 sm:block"
+              className="hidden w-0 opacity-0 accent-white transition-[width,opacity] group-hover/vol:w-20 group-hover/vol:opacity-100 focus:w-20 focus:opacity-100 sm:block"
             />
           </div>
           <span className="ml-1 text-caption tabular-nums text-white/85">

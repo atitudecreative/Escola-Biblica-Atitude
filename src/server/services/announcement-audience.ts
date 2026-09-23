@@ -1,4 +1,9 @@
 import "server-only";
+import { after } from "next/server";
+import { sendEmail } from "@/server/email";
+import { getSettings } from "@/server/settings";
+import { logger } from "@/server/logger";
+import { filterRecipients } from "./preferences";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { parseInput } from "@/server/action";
@@ -78,4 +83,37 @@ export async function listSentAnnouncements(user: SessionUser) {
       targetUser: { select: { id: true, name: true } },
     },
   });
+}
+
+/**
+ * Fan-out de e-mail do comunicado: roda depois da resposta (after), só se
+ * `communication.emailNotifications` estiver ligado, respeitando a preferência
+ * de e-mail de cada pessoa. Envia em lotes de 20; falhas individuais ficam
+ * registradas no outbox/log e não interrompem os demais envios.
+ */
+export function scheduleAnnouncementEmails(recipientIds: string[], a: { id: string; title: string; body: string }) {
+  if (!recipientIds.length) return;
+  const run = async () => {
+    try {
+      const settings = await getSettings("communication");
+      if (!settings.emailNotifications) return;
+      const allowed = await filterRecipients(recipientIds, "ANNOUNCEMENT", "email");
+      const users = await db.user.findMany({ where: { id: { in: allowed }, status: "ACTIVE" }, select: { email: true, name: true } });
+      for (let i = 0; i < users.length; i += 20) {
+        const batch = users.slice(i, i + 20);
+        const results = await Promise.allSettled(
+          batch.map((u) => sendEmail(u.email, "announcement", { name: u.name, title: a.title, body: a.body, url: `/announcements#${a.id}` })),
+        );
+        const failed = results.filter((r) => r.status === "rejected").length;
+        if (failed) logger.error("announcement.email_batch_failed", { announcementId: a.id, failed, category: "infra" });
+      }
+    } catch (error) {
+      logger.error("announcement.email_failed", { announcementId: a.id, error, category: "infra" });
+    }
+  };
+  try {
+    after(run);
+  } catch {
+    void run(); // fora de um contexto de requisição
+  }
 }

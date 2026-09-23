@@ -214,11 +214,16 @@ export async function teacherStudents(user: SessionUser, filter: { q?: string; c
     if (la && (!r.lastAccess || la > r.lastAccess)) r.lastAccess = la;
     map.set(e.user.id, r);
   }
-  const rows = [...map.values()].map((r) => ({ ...r, avgProgress: Math.round(r.courses.reduce((n, c) => n + c.progress, 0) / r.courses.length) }));
+  const cutoff = Date.now() - 14 * DAY;
+  const rows = [...map.values()].map((r) => ({
+    ...r,
+    avgProgress: Math.round(r.courses.reduce((n, c) => n + c.progress, 0) / r.courses.length),
+    stale: !r.lastAccess || r.lastAccess.getTime() < cutoff,
+  }));
   rows.sort((a, b) => (b.lastAccess?.getTime() ?? 0) - (a.lastAccess?.getTime() ?? 0) || a.user.name.localeCompare(b.user.name));
   const pageSize = filter.pageSize ?? 20;
   const page = filter.page ?? 1;
-  const inactive = rows.filter((r) => !r.lastAccess || r.lastAccess.getTime() < Date.now() - 14 * DAY).length;
+  const inactive = rows.filter((r) => r.stale).length;
   return { rows: rows.slice((page - 1) * pageSize, page * pageSize), total: rows.length, inactive, pageSize, page };
 }
 

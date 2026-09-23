@@ -472,23 +472,25 @@ async function copyLesson(lessonId: string, moduleId: string, position: number, 
     },
   });
   if (src.quiz) {
-    const { id: _id, lessonId: _l, createdAt: _c, updatedAt: _u, questions, ...quiz } = src.quiz;
+    const q = src.quiz;
     await db.quiz.create({
       data: {
-        ...quiz,
-        lessonId: copy.id,
+        courseId: q.courseId, lessonId: copy.id, title: q.title, description: q.description, passingScore: q.passingScore, maxAttempts: q.maxAttempts,
+        shuffleQuestions: q.shuffleQuestions, timeLimitMinutes: q.timeLimitMinutes, feedbackMode: q.feedbackMode, requiredToComplete: q.requiredToComplete,
         questions: {
-          create: questions.map((q) => ({
-            type: q.type, prompt: q.prompt, explanation: q.explanation, points: q.points, position: q.position, acceptedAnswers: q.acceptedAnswers,
-            options: { create: q.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect, position: o.position })) },
+          create: q.questions.map((x) => ({
+            type: x.type, prompt: x.prompt, explanation: x.explanation, points: x.points, position: x.position, acceptedAnswers: x.acceptedAnswers,
+            options: { create: x.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect, position: o.position })) },
           })),
         },
       },
     });
   }
   if (src.assignment) {
-    const { id: _id, lessonId: _l, createdAt: _c, updatedAt: _u, ...a } = src.assignment;
-    await db.assignment.create({ data: { ...a, lessonId: copy.id } });
+    const a = src.assignment;
+    await db.assignment.create({
+      data: { courseId: a.courseId, lessonId: copy.id, title: a.title, instructions: a.instructions, dueAt: a.dueAt, maxScore: a.maxScore, passingScore: a.passingScore, allowText: a.allowText, allowFile: a.allowFile },
+    });
   }
   return copy;
 }

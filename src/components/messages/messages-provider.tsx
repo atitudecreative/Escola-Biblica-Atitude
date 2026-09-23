@@ -34,7 +34,9 @@ export function MessagesProvider({ me, initial, children }: { me: string; initia
 
   // Conversa recém-criada (ex.: ?to=) que ainda não está na lista.
   useEffect(() => {
-    if (activeId && !conversations.some((c) => c.id === activeId)) void reload();
+    if (!activeId || conversations.some((c) => c.id === activeId)) return;
+    const t = setTimeout(() => void reload(), 0);
+    return () => clearTimeout(t);
   }, [activeId, conversations, reload]);
 
   const bump = useCallback((id: string, patch: Partial<ConversationSummary>) => {

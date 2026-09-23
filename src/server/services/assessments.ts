@@ -112,6 +112,9 @@ export async function startAttempt(user: SessionUser, quizId: string) {
   const open = attempts.find((a) => a.status === "IN_PROGRESS");
   if (open && (!open.expiresAt || open.expiresAt > new Date())) return open;
   if (open) await finalizeAttempt(open.id, {}); // tempo esgotado: finaliza com o que foi salvo
+  if (attempts.some((a) => a.status === "PENDING_REVIEW")) {
+    throw new AppError("Aguarde a correção da tentativa anterior antes de refazer.", "AWAITING_REVIEW");
+  }
   const used = await db.quizAttempt.count({ where: { quizId, userId: user.id, status: { not: "IN_PROGRESS" } } });
   if (quiz.maxAttempts > 0 && used >= quiz.maxAttempts) throw new AppError("Você já usou todas as tentativas desta avaliação.", "NO_ATTEMPTS", 403);
 

@@ -8,6 +8,7 @@ import { ForbiddenError, NotFoundError } from "@/server/errors";
 import { announcementSchema, type AnnouncementInput } from "@/lib/validation/teacher";
 import { canManageCourse } from "./access";
 import { notify } from "./notifications";
+import { scheduleAnnouncementEmails } from "./announcement-audience";
 
 /**
  * Comunicados. Regras:
@@ -70,6 +71,8 @@ export async function sendAnnouncement(user: SessionUser, input: AnnouncementInp
     body: data.body.length > 180 ? `${data.body.slice(0, 177)}…` : data.body,
     link: `/announcements#${announcement.id}`,
   });
+  // E-mail em lote, após a resposta e tolerante a falhas (ver announcement-audience.ts).
+  scheduleAnnouncementEmails(recipientIds, { id: announcement.id, title: data.title, body: data.body });
   await audit("announcement.sent", {
     actorId: user.id,
     entityType: "announcement",

@@ -46,7 +46,7 @@ export type ReportDef = {
 const DAY = 86_400_000;
 const badge = (b: { label: string; tone: Tone }): BadgeCell => ({ label: b.label, tone: b.tone });
 const dateRange = (p: Period) => (p.from ? { gte: p.from, lt: p.to } : undefined);
-const pg = (paging: Paging) => (paging ? { skip: paging.skip, take: paging.take } : { take: 20_000 });
+const pg = (paging: Paging): { skip: number; take: number } => (paging ? { skip: paging.skip, take: paging.take } : { skip: 0, take: 20_000 });
 const qUser = (q?: string): Prisma.UserWhereInput | undefined =>
   q?.trim() ? { OR: [{ name: { contains: q.trim(), mode: "insensitive" } }, { email: { contains: q.trim(), mode: "insensitive" } }] } : undefined;
 const statusOpts = <K extends string>(m: Record<K, { label: string }>, keys?: K[]) => (keys ?? (Object.keys(m) as K[])).map((k) => ({ value: k, label: m[k].label }));
@@ -592,6 +592,7 @@ const users: ReportDef = {
   description: "Contas selecionadas",
   defaultPeriod: "all",
   hidden: true,
+  statusOptions: statusOpts(USER_STATUS),
   columns: [
     { key: "name", label: "Nome", primary: true },
     { key: "email", label: "E-mail" },

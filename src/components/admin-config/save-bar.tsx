@@ -22,8 +22,8 @@ export function SaveBar({
   return (
     <div
       className={cn(
-        "sticky bottom-20 z-30 mt-6 flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors md:bottom-4",
-        dirty ? "border-border-strong bg-surface shadow-md" : "border-border bg-surface-2/60",
+        "z-30 mt-6 flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors",
+        dirty ? "sticky bottom-20 border-border-strong bg-surface shadow-md md:bottom-4" : "border-border bg-surface-2",
         className,
       )}
     >

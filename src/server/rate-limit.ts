@@ -37,8 +37,12 @@ export async function clientIp() {
   }
 }
 
+// Em desenvolvimento/QA automatizado (vários testes a partir do mesmo IP) os limites
+// podem ser afrouxados com RATE_LIMIT_RELAXED=true. Nunca tem efeito em produção.
+const RELAXED = process.env.NODE_ENV !== "production" && process.env.RATE_LIMIT_RELAXED === "true";
+
 /** Lança RateLimitError quando `limit` é excedido na janela. */
 export async function rateLimit(bucket: string, limit: number, windowMs: number, identity?: string) {
   const key = `${bucket}:${identity ?? (await clientIp())}`;
-  if (store.hit(key, windowMs) > limit) throw new RateLimitError();
+  if (store.hit(key, windowMs) > (RELAXED ? limit * 50 : limit)) throw new RateLimitError();
 }

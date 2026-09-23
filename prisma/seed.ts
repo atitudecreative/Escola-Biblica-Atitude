@@ -326,7 +326,7 @@ async function main() {
   const anaPlan: Record<string, number> = {
     "panorama-do-novo-testamento": 100,
     "panorama-do-antigo-testamento": 58,
-    "hermeneutica-como-interpretar-a-biblia": 34,
+    "hermeneutica-como-interpretar-a-biblia": 56,
     "lideranca-servidora": 12,
   };
 
