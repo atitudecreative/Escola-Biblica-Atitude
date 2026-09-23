@@ -20,7 +20,8 @@ const schema = z.object({
 });
 
 function load() {
-  const parsed = schema.safeParse(process.env);
+  // No Render, sem APP_URL definido, usa a URL pública do serviço (RENDER_EXTERNAL_URL).
+  const parsed = schema.safeParse({ ...process.env, APP_URL: process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || undefined });
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `  - ${i.path.join(".")}: ${i.message}`).join("\n");
     throw new Error(`Configuração de ambiente inválida:\n${issues}`);
