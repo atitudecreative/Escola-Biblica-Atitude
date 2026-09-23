@@ -1,15 +1,18 @@
 # Blueprint do Render — https://render.com/docs/blueprint-spec
 # Uso: Render Dashboard → New → Blueprint → selecione este repositório.
-# Cria o PostgreSQL e o serviço web com disco persistente para uploads.
+# Cria o serviço web com disco persistente para uploads. O banco é o Supabase.
 # Na criação, o Render pede os valores marcados com `sync: false`.
-
-databases:
-  - name: eba-db
-    databaseName: eba
-    user: eba
-    plan: basic-256mb
-    region: virginia
-    postgresMajorVersion: "16"
+#
+# Preferiu o Postgres do próprio Render? Descomente o bloco abaixo e troque
+# DATABASE_URL por:  fromDatabase: { name: eba-db, property: connectionString }
+#
+# databases:
+#   - name: eba-db
+#     databaseName: eba
+#     user: eba
+#     plan: basic-256mb
+#     region: virginia
+#     postgresMajorVersion: "16"
 
 services:
   - type: web
@@ -31,10 +34,10 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
+      # Supabase → Connect → "Session pooler" (porta 5432, host *.pooler.supabase.com), com ?connection_limit=5 no final.
+      # Não use a conexão direta (só IPv6) nem o Transaction pooler (6543), que quebra as migrações.
       - key: DATABASE_URL
-        fromDatabase:
-          name: eba-db
-          property: connectionString
+        sync: false
       - key: SESSION_SECRET
         generateValue: true
       - key: STORAGE_DRIVER

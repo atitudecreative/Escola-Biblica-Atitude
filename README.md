@@ -126,14 +126,22 @@ Logs estruturados em JSON (`src/server/logger.ts`) com categoria **user / app / 
 
 ### Render (recomendado)
 
-O `render.yaml` na raiz cria PostgreSQL 16, o serviço web e um disco persistente para uploads.
+O `render.yaml` na raiz cria o serviço web com disco persistente para uploads; o banco é o **Supabase**.
 
-1. Render → **New → Blueprint** → selecione este repositório (branch `main`).
-2. Preencha `ADMIN_EMAIL` e `ADMIN_PASSWORD` (mín. 8 caracteres, com letra e número). `APP_URL` só é necessário com domínio próprio (sem ele, usa a URL `.onrender.com`); `RESEND_API_KEY` só para envio real de e-mails.
+**Supabase**
+1. Crie o projeto na região mais próxima do Render (Virginia → `us-east-1`).
+2. **Não** ative `unaccent`/`pg_trgm` pelo painel: a migração cria as extensões no schema `public`, onde a busca as espera.
+3. Em **Project Settings → Data API**, desative a API ou remova `public` dos schemas expostos — o app não a usa e as tabelas não devem ficar acessíveis por REST.
+4. Em **Connect**, copie a string do **Session pooler** (porta 5432) e acrescente `?connection_limit=5`. A conexão direta é só IPv6 (o Render não alcança) e o Transaction pooler (6543) quebra as migrações.
+5. No plano gratuito o projeto pausa após 7 dias sem uso; para produção use o Pro e ative backups.
+
+**Render**
+1. **New → Blueprint** → selecione este repositório (branch `main`).
+2. Preencha `DATABASE_URL` (string do Supabase acima), `ADMIN_EMAIL` e `ADMIN_PASSWORD` (mín. 8 caracteres, com letra e número). `APP_URL` só é necessário com domínio próprio (sem ele, usa a URL `.onrender.com`); `RESEND_API_KEY` só para envio real de e-mails.
 3. **Apply**. A cada deploy o pre-deploy roda `prisma migrate deploy` e `npm run db:bootstrap`.
 4. Após o primeiro login, remova `ADMIN_PASSWORD` do ambiente.
 
-Disco e pre-deploy exigem plano pago do serviço web. Nunca rode `db:seed` em produção.
+Disco e pre-deploy exigem plano pago do serviço web. Para usar o Postgres do próprio Render, veja o bloco comentado no `render.yaml`. Nunca rode `db:seed` em produção.
 
 ### Outros provedores
 
