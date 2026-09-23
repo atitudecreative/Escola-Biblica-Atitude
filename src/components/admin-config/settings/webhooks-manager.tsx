@@ -1,4 +1,5 @@
 "use client";
+import { RelativeTime } from "@/components/ui/relative-time";
 import { useState } from "react";
 import Link from "next/link";
 import { Copy, KeyRound, MoreHorizontal, PencilLine, Plus, Send, Trash2, Webhook } from "lucide-react";
@@ -14,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/components/ui/confirm";
 import { toast } from "@/components/ui/toaster";
 import { useAction } from "@/hooks/use-action";
-import { formatNumber, timeAgo } from "@/lib/format";
+import {formatNumber} from "@/lib/format";
 import { deleteWebhookAction, rotateWebhookSecretAction, saveWebhookAction, testWebhookAction } from "@/app/(app)/admin/settings/actions";
 
 type EventOpt = { key: string; label: string };
@@ -91,7 +92,7 @@ export function WebhooksManager({ events, endpoints, deliveries, totalDeliveries
                 <DeliveryStatus statusCode={d.statusCode} error={d.error} />
                 <span className="font-mono text-caption">{d.event}</span>
                 <span className="hidden min-w-0 flex-1 truncate text-subtle sm:block">{d.url}</span>
-                <span className="ml-auto shrink-0 text-caption text-subtle">{timeAgo(d.createdAt)}</span>
+                <span className="ml-auto shrink-0 text-caption text-subtle"><RelativeTime date={d.createdAt} /></span>
               </li>
             ))}
           </ul>
@@ -141,7 +142,7 @@ function EndpointRow({ ep, labelOf, onEdit, onSecret }: { ep: Endpoint; labelOf:
           </div>
           <p className="mt-2 text-caption text-subtle">
             Segredo {ep.secretHint} · {formatNumber(ep.deliveries)} entrega(s)
-            {ep.last ? ` · última ${timeAgo(ep.last.createdAt)}` : ""}
+            {ep.last && <> · última <RelativeTime date={ep.last.createdAt} /></>}
           </p>
           {result && (
             <p className={result.ok ? "mt-1 text-caption font-medium text-success" : "mt-1 text-caption font-medium text-danger"} role="status">

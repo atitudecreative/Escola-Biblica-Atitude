@@ -54,7 +54,7 @@ export function CatalogSearch() {
 export function CatalogSort() {
   const { params, set } = useFilters();
   return (
-    <NativeSelect aria-label="Ordenar por" value={params.get("sort") ?? "popular"} onChange={(e) => set({ sort: e.target.value === "popular" ? null : e.target.value })} className="h-11 sm:h-11 sm:w-48">
+    <NativeSelect aria-label="Ordenar por" value={params.get("sort") ?? "popular"} onChange={(e) => set({ sort: e.target.value === "popular" ? null : e.target.value })} className="sm:w-48" selectClassName="h-11 sm:h-11">
       <option value="popular">Mais populares</option>
       <option value="rating">Mais bem avaliados</option>
       <option value="newest">Mais recentes</option>

@@ -12,13 +12,16 @@ export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<H
   return <textarea className={cn(controlBase, "min-h-24 px-3 py-2 text-sm leading-relaxed", className)} {...props} />;
 }
 
-export function NativeSelect({ className, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+/** `className` estiliza o contêiner (largura/layout); `selectClassName`, o próprio select (ex.: altura). */
+export function NativeSelect({
+  className,
+  selectClassName,
+  children,
+  ...props
+}: React.SelectHTMLAttributes<HTMLSelectElement> & { selectClassName?: string }) {
   return (
-    <div className="relative">
-      <select
-        className={cn(controlBase, "h-10 appearance-none pr-9 pl-3 text-sm sm:h-9", className)}
-        {...props}
-      >
+    <div className={cn("relative", className)}>
+      <select className={cn(controlBase, "h-10 appearance-none pr-9 pl-3 text-sm sm:h-9", selectClassName)} {...props}>
         {children}
       </select>
       <svg

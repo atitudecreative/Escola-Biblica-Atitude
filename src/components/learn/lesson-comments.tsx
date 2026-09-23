@@ -1,4 +1,5 @@
 "use client";
+import { RelativeTime } from "@/components/ui/relative-time";
 import { useState } from "react";
 import { MessageSquare, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -8,7 +9,7 @@ import { Textarea } from "@/components/ui/input";
 import { useConfirm } from "@/components/ui/confirm";
 import { useAction } from "@/hooks/use-action";
 import { deleteCommentAction, postCommentAction } from "@/app/learn/actions";
-import { timeAgo } from "@/lib/format";
+
 
 type Author = { id: string; name: string; avatarUrl: string | null; roles: { role: { key: string } }[] };
 export type CommentData = { id: string; body: string; createdAt: Date; deletedAt: Date | null; user: Author; replies?: CommentData[] };
@@ -55,7 +56,7 @@ function CommentItem({ c, lessonId, me, canModerate, isReply }: { c: CommentData
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-sm font-medium">{c.user.name}</span>
           {isTeacher(c.user) && <Badge tone="primary">Professor</Badge>}
-          <span className="text-caption text-subtle">{timeAgo(c.createdAt)}</span>
+          <span className="text-caption text-subtle"><RelativeTime date={c.createdAt} /></span>
         </div>
         {c.deletedAt ? (
           <p className="mt-1 text-sm text-subtle italic">Comentário removido.</p>

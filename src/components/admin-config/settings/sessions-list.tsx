@@ -1,4 +1,5 @@
 "use client";
+import { RelativeTime } from "@/components/ui/relative-time";
 import { MonitorSmartphone } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useConfirm } from "@/components/ui/confirm";
 import { useAction } from "@/hooks/use-action";
-import { formatNumber, timeAgo } from "@/lib/format";
+import {formatNumber} from "@/lib/format";
 import { describeUserAgent } from "./user-agent";
 import { revokeSessionAction } from "@/app/(app)/admin/settings/actions";
 
@@ -44,7 +45,7 @@ export function SessionsList({ sessions, total, currentSessionId }: { sessions: 
                   </p>
                   <p className="truncate text-caption text-subtle">
                     {describeUserAgent(s.userAgent)}
-                    {s.ip ? ` · ${s.ip}` : ""} · ativa {timeAgo(s.lastUsedAt)}
+                    {s.ip ? ` · ${s.ip}` : ""} · ativa <RelativeTime date={s.lastUsedAt} />
                   </p>
                 </div>
                 {!current && (

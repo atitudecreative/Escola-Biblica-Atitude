@@ -1,4 +1,5 @@
 "use client";
+import { RelativeTime } from "@/components/ui/relative-time";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Laptop, Monitor, Moon, Smartphone, Sun } from "lucide-react";
@@ -12,7 +13,7 @@ import { useConfirm } from "@/components/ui/confirm";
 import { useAction } from "@/hooks/use-action";
 import { changePasswordAction, revokeOtherSessionsAction, revokeSessionAction, savePrivacyAction } from "@/app/(app)/profile/actions";
 import type { Privacy } from "@/lib/validation/profile";
-import { timeAgo } from "@/lib/format";
+
 import { cn } from "@/lib/utils";
 
 export function PasswordForm() {
@@ -133,7 +134,7 @@ export function SessionsList({ sessions, currentId }: { sessions: SessionRow[]; 
               <Icon className="size-5 shrink-0 text-subtle" />
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2 text-sm font-medium">{d.label} {current && <Badge tone="success">Esta sessão</Badge>}</p>
-                <p className="text-caption text-subtle">{s.ip ?? "IP desconhecido"} · ativo {timeAgo(s.lastUsedAt)}</p>
+                <p className="text-caption text-subtle">{s.ip ?? "IP desconhecido"} · ativo <RelativeTime date={s.lastUsedAt} /></p>
               </div>
               {!current && (
                 <Button variant="ghost" size="sm" onClick={async () => (await confirm({ title: "Encerrar sessão?", description: "O dispositivo precisará entrar novamente.", confirmLabel: "Encerrar" })) && one.run(s.id)}>

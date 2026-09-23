@@ -31,13 +31,15 @@ export function NotificationPreferences({
   types,
   emailTypes,
   emailEnabled,
+  defaultOpen = false,
 }: {
+  defaultOpen?: boolean;
   initial: Prefs;
   types: NotificationType[];
   emailTypes: NotificationType[];
   emailEnabled: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [prefs, setPrefs] = useState(initial);
   const { run, pending } = useAction(saveNotificationPrefsAction, { errorToast: true });
 

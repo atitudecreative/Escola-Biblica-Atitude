@@ -34,6 +34,7 @@ export default async function NotificationsPage({ searchParams }: PageProps<"/no
             types={[...CONFIGURABLE_TYPES]}
             emailTypes={[...EMAIL_CAPABLE_TYPES]}
             emailEnabled={communication.emailNotifications}
+            defaultOpen={sp.tab === "preferences"}
           />
         }
       />

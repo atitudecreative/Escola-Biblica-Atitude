@@ -1,4 +1,5 @@
 "use client";
+import { RelativeTime } from "@/components/ui/relative-time";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Bell, CheckCheck } from "lucide-react";
@@ -7,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { markNotificationsReadAction, recentNotificationsAction } from "@/app/(app)/shell-actions";
-import { timeAgo } from "@/lib/format";
+
 import { cn } from "@/lib/utils";
 
 export function NotificationsPopover({ unread }: { unread: number }) {
@@ -79,7 +80,7 @@ export function NotificationsPopover({ unread }: { unread: number }) {
                     <span className="min-w-0">
                       <span className={cn("block text-sm", n.readAt ? "text-muted" : "font-medium text-fg")}>{n.title}</span>
                       {n.body && <span className="mt-0.5 line-clamp-2 block text-small text-muted">{n.body}</span>}
-                      <span className="mt-1 block text-caption text-subtle">{timeAgo(n.createdAt)}</span>
+                      <span className="mt-1 block text-caption text-subtle"><RelativeTime date={n.createdAt} /></span>
                     </span>
                   </Link>
                 </li>
