@@ -1,0 +1,62 @@
+# Blueprint do Render — https://render.com/docs/blueprint-spec
+# Uso: Render Dashboard → New → Blueprint → selecione este repositório.
+# Cria o PostgreSQL e o serviço web com disco persistente para uploads.
+# Na criação, o Render pede os valores marcados com `sync: false`.
+
+databases:
+  - name: eba-db
+    databaseName: eba
+    user: eba
+    plan: basic-256mb
+    region: virginia
+    postgresMajorVersion: "16"
+
+services:
+  - type: web
+    name: escola-biblica-atitude
+    runtime: node
+    region: virginia
+    # Disco persistente e pre-deploy exigem plano pago (starter ou superior).
+    plan: starter
+    branch: main
+    buildCommand: npm ci --include=dev && npm run build
+    # Migrações + perfis/permissões/admin inicial (idempotente, não apaga dados).
+    preDeployCommand: npx prisma migrate deploy && npm run db:bootstrap
+    startCommand: npm start
+    healthCheckPath: /robots.txt
+    disk:
+      name: storage
+      mountPath: /var/data
+      sizeGB: 10
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: eba-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: STORAGE_DRIVER
+        value: local
+      - key: STORAGE_LOCAL_DIR
+        value: /var/data/storage
+      - key: UPLOAD_MAX_MB
+        value: "200"
+      # Sem domínio próprio, deixe em branco: usa a URL .onrender.com automaticamente.
+      - key: APP_URL
+        sync: false
+      # Primeiro administrador, criado no pre-deploy. Remova ADMIN_PASSWORD após o primeiro acesso.
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_NAME
+        sync: false
+      # E-mail: "log" grava na caixa de saída (Admin › Logs) sem enviar; use "resend" ou "smtp" para enviar.
+      - key: EMAIL_PROVIDER
+        value: log
+      - key: EMAIL_FROM
+        value: Escola Bíblica Atitude <nao-responda@ibatitude.com.br>
+      - key: RESEND_API_KEY
+        sync: false

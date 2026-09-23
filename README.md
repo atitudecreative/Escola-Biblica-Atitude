@@ -118,12 +118,26 @@ Logs estruturados em JSON (`src/server/logger.ts`) com categoria **user / app / 
 | `npm run build` / `npm start` | Build e servidor de produção |
 | `npm run typecheck` · `npm run lint` · `npm test` | Tipos, lint e testes unitários |
 | `npm run db:migrate` | Aplica migrações (produção) |
-| `npm run db:seed` | Recria os dados de demonstração |
+| `npm run db:bootstrap` | Produção: perfis, permissões e primeiro admin (`ADMIN_EMAIL`/`ADMIN_PASSWORD`); idempotente, não apaga dados |
+| `npm run db:seed` | Recria os dados de demonstração (**apaga o banco**) |
 | `node scripts/qa/crawl.mjs` | QA automatizado de todas as rotas por perfil (desktop + mobile) |
 
 ## Deploy
 
+### Render (recomendado)
+
+O `render.yaml` na raiz cria PostgreSQL 16, o serviço web e um disco persistente para uploads.
+
+1. Render → **New → Blueprint** → selecione este repositório (branch `main`).
+2. Preencha `ADMIN_EMAIL` e `ADMIN_PASSWORD` (mín. 8 caracteres, com letra e número). `APP_URL` só é necessário com domínio próprio (sem ele, usa a URL `.onrender.com`); `RESEND_API_KEY` só para envio real de e-mails.
+3. **Apply**. A cada deploy o pre-deploy roda `prisma migrate deploy` e `npm run db:bootstrap`.
+4. Após o primeiro login, remova `ADMIN_PASSWORD` do ambiente.
+
+Disco e pre-deploy exigem plano pago do serviço web. Nunca rode `db:seed` em produção.
+
+### Outros provedores
+
 1. PostgreSQL gerenciado com permissão para `CREATE EXTENSION unaccent, pg_trgm` (ou crie-as previamente).
 2. Configure as variáveis do `.env.example` (nunca use `DEMO_MODE` ou `RATE_LIMIT_RELAXED` em produção).
-3. `npm ci && npm run db:migrate && npm run build && npm start`.
+3. `npm ci && npm run db:migrate && npm run db:bootstrap && npm run build && npm start`.
 4. Para mais de uma instância: troque o armazenamento local por um driver S3 e o rate limit em memória por Redis (as interfaces já existem em `src/server/storage` e `src/server/rate-limit.ts`).
