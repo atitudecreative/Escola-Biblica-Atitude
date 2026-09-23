@@ -55,9 +55,9 @@ export function ChartCard({
 /** Gráfico principal: uma métrica por vez (sem eixo duplo), escolhida no seletor. */
 export function EngagementChart({ data, description }: { data: Row[]; description?: string }) {
   const metrics = [
-    { key: "hours", label: "Horas estudadas", format: "hours" as const, slot: 1 as const },
-    { key: "active", label: "Alunos ativos", format: "number" as const, slot: 3 as const },
-    { key: "lessons", label: "Aulas concluídas", format: "number" as const, slot: 2 as const },
+    { key: "hours", short: "Horas", label: "Horas estudadas", format: "hours" as const, slot: 1 as const },
+    { key: "active", short: "Alunos", label: "Alunos ativos", format: "number" as const, slot: 3 as const },
+    { key: "lessons", short: "Aulas", label: "Aulas concluídas", format: "number" as const, slot: 2 as const },
   ];
   const [metric, setMetric] = useState(metrics[0]);
   const series: Series[] = [{ key: metric.key, label: metric.label, slot: metric.slot }];
@@ -101,7 +101,7 @@ export function EngagementChart({ data, description }: { data: Row[]; descriptio
               metric.key === m.key && "bg-surface-2 text-fg ring-border-strong",
             )}
           >
-            {m.label}
+            {m.short}
           </button>
         ))}
       </div>

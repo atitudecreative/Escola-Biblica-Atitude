@@ -79,7 +79,7 @@ export default async function AdminCoursesPage(props: PageProps<"/admin/courses"
               Aguardando revisão
             </h2>
             <Badge tone="warning">{queue.length}</Badge>
-            <p className="ml-auto hidden text-small text-muted sm:block">Aprovar publica o curso e avisa o professor.</p>
+            {canManage && <p className="ml-auto hidden text-small text-muted sm:block">Aprovar publica o curso e avisa o professor.</p>}
           </div>
           <ul className="divide-y divide-border">
             {queue.map((c) => (
@@ -98,12 +98,16 @@ export default async function AdminCoursesPage(props: PageProps<"/admin/courses"
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/teacher/courses/${c.id}`}>
-                      <PencilLine /> Abrir no builder
-                    </Link>
-                  </Button>
-                  {canManage && <ReviewActions course={{ id: c.id, title: c.title }} />}
+                  {canManage && (
+                    <>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/teacher/courses/${c.id}`}>
+                          <PencilLine /> Abrir no builder
+                        </Link>
+                      </Button>
+                      <ReviewActions course={{ id: c.id, title: c.title }} />
+                    </>
+                  )}
                 </div>
               </li>
             ))}
@@ -185,7 +189,7 @@ export default async function AdminCoursesPage(props: PageProps<"/admin/courses"
                         <CourseThumb title={c.title} src={c.coverUrl} className="w-16 shrink-0 rounded" />
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <Link href={`/teacher/courses/${c.id}`} className="truncate font-medium text-fg hover:underline">
+                            <Link href={canManage ? `/teacher/courses/${c.id}` : `/courses/${c.slug}`} className="truncate font-medium text-fg hover:underline">
                               {c.title}
                             </Link>
                             {c.isFeatured && (
@@ -240,7 +244,7 @@ export default async function AdminCoursesPage(props: PageProps<"/admin/courses"
                   )}
                   <CourseThumb title={c.title} src={c.coverUrl} className="w-20 shrink-0 self-start rounded" />
                   <div className="min-w-0 flex-1">
-                    <Link href={`/teacher/courses/${c.id}`} className="line-clamp-2 font-medium text-fg">
+                    <Link href={canManage ? `/teacher/courses/${c.id}` : `/courses/${c.slug}`} className="line-clamp-2 font-medium text-fg">
                       {c.title}
                     </Link>
                     <p className="mt-0.5 truncate text-caption text-subtle">{c.instructor.name}</p>

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useId, useState } from "react";
 import Link from "next/link";
 import {
   closestCenter,
@@ -71,6 +71,7 @@ const sameShape = (a: Shape, b: Shape) => JSON.stringify(a) === JSON.stringify(b
  * imediatamente; em caso de erro, a ordem anterior é restaurada.
  */
 export function CurriculumEditor({ courseId, initial, coursePublished }: { courseId: string; initial: CurriculumModule[]; coursePublished: boolean }) {
+  const dndId = useId();
   const [modules, setModules] = useState(initial);
   const [prevInitial, setPrevInitial] = useState(initial);
   if (initial !== prevInitial) {
@@ -239,7 +240,7 @@ export function CurriculumEditor({ courseId, initial, coursePublished }: { cours
   const activeLesson = active?.type === "lesson" ? modules.flatMap((m) => m.lessons).find((l) => l.id === active.id) : null;
 
   return (
-    <div>
+    <div className="min-w-0">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-small text-muted">
           {pluralize(modules.length, "módulo", "módulos")} · {pluralize(totalLessons, "aula", "aulas")}
@@ -268,6 +269,7 @@ export function CurriculumEditor({ courseId, initial, coursePublished }: { cours
         />
       ) : (
         <DndContext
+          id={dndId}
           sensors={sensors}
           collisionDetection={collision}
           onDragStart={onDragStart}

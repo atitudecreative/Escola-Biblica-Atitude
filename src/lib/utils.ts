@@ -1,5 +1,11 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+// Ensina ao tailwind-merge as escalas tipográficas próprias (@utility em globals.css).
+// Sem isso, "text-small" é tratado como cor e remove, por exemplo, "text-primary-fg".
+const twMerge = extendTailwindMerge({
+  extend: { classGroups: { "font-size": [{ text: ["display", "h1", "h2", "h3", "h4", "body", "small", "caption", "overline"] }] } },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

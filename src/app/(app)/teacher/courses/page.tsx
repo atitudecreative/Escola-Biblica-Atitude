@@ -12,7 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { TableToolbar } from "@/components/data/table-toolbar";
 import { buildHref, strParam } from "@/components/data/sort-header";
-import { CourseCover } from "@/components/course/course-cover";
+import { CourseThumb } from "@/components/teacher/course-thumb";
 import { COURSE_STATUS } from "@/lib/labels";
 import { formatNumber, pluralize, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -122,7 +122,7 @@ export default async function TeacherCoursesPage(props: PageProps<"/teacher/cour
                       <TR key={c.id} className="group relative">
                         <TD className="py-3">
                           <div className="flex items-center gap-3">
-                            <CourseCover title={c.title} src={c.coverUrl} size="sm" className="w-20 shrink-0 rounded-md" />
+                            <CourseThumb title={c.title} src={c.coverUrl} width={80} />
                             <div className="min-w-0">
                               <Link href={`/teacher/courses/${c.id}`} className="line-clamp-1 font-medium text-fg after:absolute after:inset-0 group-hover:text-primary">
                                 {c.title}
@@ -163,7 +163,7 @@ export default async function TeacherCoursesPage(props: PageProps<"/teacher/cour
                 {courses.map((c) => (
                   <li key={c.id}>
                     <Link href={`/teacher/courses/${c.id}`} className="flex gap-3 rounded-xl border border-border bg-surface p-3 shadow-xs active:bg-surface-2">
-                      <CourseCover title={c.title} src={c.coverUrl} size="sm" className="w-24 shrink-0 self-start rounded-md" />
+                      <CourseThumb title={c.title} src={c.coverUrl} width={96} className="self-start" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
                           <p className="line-clamp-2 text-sm font-medium text-fg">{c.title}</p>

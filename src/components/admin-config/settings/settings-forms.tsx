@@ -194,7 +194,7 @@ export function AppearanceForm({ initial }: { initial: AppearanceValues }) {
               hint={
                 <p className={cn("inline-flex items-center gap-1.5 text-caption font-medium", ok ? "text-success" : "text-warning")}>
                   {ok ? <CheckCircle2 className="size-3.5" /> : <AlertTriangle className="size-3.5" />}
-                  Contraste com branco: {ratio.toFixed(2)}:1 {ok ? "· adequado (AA)" : "· abaixo de 4,5:1"}
+                  Contraste com branco: {ratio.toFixed(2).replace(".", ",")}:1 {ok ? "· adequado (AA)" : "· abaixo de 4,5:1"}
                 </p>
               }
             />
@@ -441,7 +441,7 @@ export function AnalyticsForm({ initial }: { initial: { gaMeasurementId: string;
           </Field>
         </div>
       </SettingsSection>
-      <SaveBar dirty={form.dirty} pending={act.pending} onReset={form.reset} />
+      <SaveBar dirty={form.dirty} pending={act.pending} onReset={form.reset} className="mb-10" />
     </form>
   );
 }

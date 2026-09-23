@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CalendarClock, ImageIcon, MoreHorizontal, PencilLine, Plus, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -65,7 +65,11 @@ function PlacementList({
   onEdit: (b: BannerRow) => void;
 }) {
   const [items, setItems] = useState(banners);
-  useEffect(() => setItems(banners), [banners]);
+  const [prevbanners, setPrevbanners] = useState(banners);
+  if (prevbanners !== banners) {
+    setPrevbanners(banners);
+    setItems(banners);
+  }
   const reorder = useAction(reorderBannersAction, { errorToast: true });
   const toggle = useAction(toggleBannerAction, { errorToast: true });
   const del = useAction(deleteBannerAction, { errorToast: true });

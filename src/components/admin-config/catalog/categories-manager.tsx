@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FolderTree, MoreHorizontal, PencilLine, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -26,7 +26,11 @@ export function CategoriesManager({ categories }: { categories: CategoryRow[] })
   const reorder = useAction(reorderCategoriesAction, { errorToast: true });
   const del = useAction(deleteCategoryAction, { errorToast: true });
 
-  useEffect(() => setItems(categories), [categories]);
+  const [prevcategories, setPrevcategories] = useState(categories);
+  if (prevcategories !== categories) {
+    setPrevcategories(categories);
+    setItems(categories);
+  }
 
   async function onReorder(ids: string[]) {
     const prev = items;

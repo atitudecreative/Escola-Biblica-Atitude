@@ -324,7 +324,11 @@ export async function sendMessage(user: SessionUser, input: unknown): Promise<Me
     db.conversationParticipant.update({ where: { conversationId_userId: { conversationId: c.id, userId: user.id } }, data: { lastReadAt: now } }),
   ]);
 
-  const recipients = c.participants.filter((p) => p.userId !== user.id).map((p) => p.userId);
+  // Quem está com a conversa aberta (leu nos últimos 20 s via polling) não precisa de aviso.
+  const activeSince = now.getTime() - 20_000;
+  const recipients = c.participants
+    .filter((p) => p.userId !== user.id && !(p.lastReadAt && p.lastReadAt.getTime() > activeSince))
+    .map((p) => p.userId);
   const title = c.type === "SUPPORT" && supportRequester(c)?.userId !== user.id ? "Resposta do suporte" : undefined;
   await notifyParticipants(user.name, c.id, recipients, snippet(data.body, !!data.attachmentId), title);
   return toMessage(message);

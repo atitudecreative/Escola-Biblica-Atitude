@@ -12,6 +12,7 @@ import { audit } from "@/server/audit";
 import { formatDate } from "@/lib/format";
 import { logger } from "@/server/logger";
 
+const LONG_DATE = "d 'de' MMMM 'de' yyyy";
 const ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"; // sem 0/O/1/I/L — fácil de digitar
 
 function block(n = 4) {
@@ -130,7 +131,7 @@ export function fillCertificateBody(body: string, d: Omit<CertificateDrawData, "
     .replaceAll("{{aluno}}", d.studentName)
     .replaceAll("{{curso}}", d.courseTitle)
     .replaceAll("{{carga}}", String(d.workloadHours))
-    .replaceAll("{{data}}", formatDate(d.issuedAt))
+    .replaceAll("{{data}}", formatDate(d.issuedAt, LONG_DATE))
     .replaceAll("{{professor}}", d.instructorName);
 }
 
@@ -188,11 +189,15 @@ async function drawCertificatePdf(
   const url = certificateUrl(cert.code);
   const qr = await QRCode.toBuffer(url, { margin: 0, width: 240, color: { dark: "#1b1a17", light: "#fbfaf6" } });
   const img = await pdf.embedPng(qr);
-  page.drawImage(img, { x: width - 150, y: 64, width: 84, height: 84 });
-  page.drawText("Valide em", { x: width - 150, y: 52, font: sans, size: 7, color: muted });
-  page.drawText(url.replace(/^https?:\/\//, ""), { x: width - 150, y: 42, font: sans, size: 6, color: muted });
+  const qrX = width - 144;
+  page.drawImage(img, { x: qrX, y: 70, width: 84, height: 84 });
+  const host = url.replace(/^https?:\/\//, "").split("/")[0];
+  const rightAlign = (text: string, y: number, size: number) =>
+    page.drawText(text, { x: qrX + 84 - sans.widthOfTextAtSize(text, size), y, font: sans, size, color: muted });
+  rightAlign("Valide a autenticidade em", 58, 7);
+  rightAlign(`${host}/certificate`, 48, 7);
   page.drawText(`Código: ${cert.code}`, { x: 60, y: 52, font: sansBold, size: 9, color: accent });
-  page.drawText(`Emitido em ${formatDate(cert.issuedAt)}`, { x: 60, y: 40, font: sans, size: 8, color: muted });
+  page.drawText(`Emitido em ${formatDate(cert.issuedAt, LONG_DATE)}`, { x: 60, y: 40, font: sans, size: 8, color: muted });
   const mark = cert.revokedAt ? "REVOGADO" : opts.watermark;
   if (mark) {
     const size = 64;

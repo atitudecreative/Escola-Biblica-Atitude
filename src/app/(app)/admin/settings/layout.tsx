@@ -8,7 +8,7 @@ export default async function SettingsLayout({ children }: { children: React.Rea
     <>
       <PageHeader eyebrow="Administração" title="Configurações" description="Identidade, aparência, regras e integrações da plataforma." />
       <div className="grid gap-6 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-10">
-        <aside className="lg:sticky lg:top-24 lg:self-start">
+        <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
           <SettingsNav />
         </aside>
         <div className="min-w-0 max-w-3xl">{children}</div>

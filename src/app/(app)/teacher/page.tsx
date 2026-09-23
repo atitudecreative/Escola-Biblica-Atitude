@@ -196,8 +196,10 @@ export default async function TeacherDashboardPage() {
             </section>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <CourseProgressChart data={d.perCourse} />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="min-w-0 lg:col-span-2">
+              <CourseProgressChart data={d.perCourse} />
+            </div>
             <StudentsPerCourse data={d.perCourse} />
           </div>
           <QuizPerformance data={d.quizPerf} />

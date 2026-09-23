@@ -93,7 +93,7 @@ export function LessonEditor({ initial, mediaFile, hasResponses }: { initial: Le
       <section className="rounded-xl border border-border bg-surface p-4 shadow-xs sm:p-5">
         <fieldset disabled={assessmentLocked}>
           <legend className="mb-2 text-small font-medium">Tipo de aula</legend>
-          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5 lg:grid-cols-9">
+          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
             {LESSON_TYPES.map((t) => (
               <label
                 key={t}

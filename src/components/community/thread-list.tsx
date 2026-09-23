@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CheckCircle2, Eye, Heart, Lock, MessageSquare, Pin } from "lucide-react";
-import { Avatar, AvatarStack } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { relative } from "@/components/communication/time";
 import { formatCompact } from "@/lib/format";
@@ -24,7 +24,6 @@ export function ThreadList({ threads }: { threads: Thread[] }) {
     <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface shadow-xs">
       {threads.map((t) => {
         const solved = !!t.solutionReplyId;
-        const repliers = [...new Map(t.replies.map((r) => [r.author.name, r.author])).values()];
         return (
           <li key={t.id} className={cn("relative transition-colors hover:bg-surface-2/60", t.isPinned && "bg-accent-soft/20")}>
             <div className="flex gap-3 px-4 py-4 sm:px-5">
@@ -66,7 +65,6 @@ export function ThreadList({ threads }: { threads: Thread[] }) {
                 </div>
               </div>
               <div className="hidden shrink-0 items-center gap-5 self-center sm:flex">
-                {repliers.length > 0 && <AvatarStack people={repliers} max={3} size="xs" />}
                 <div className="grid w-40 grid-cols-3 text-center">
                   <Metric value={t.replyCount} label="respostas" highlight={solved} />
                   <Metric value={t.likeCount} label="curtidas" />

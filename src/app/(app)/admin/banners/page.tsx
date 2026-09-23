@@ -55,10 +55,10 @@ export default async function BannersPage(props: PageProps<"/admin/banners">) {
 }
 
 async function BannersTab() {
-  const banners = await listBanners();
+  const [banners, now] = await Promise.all([listBanners(), Promise.resolve(new Date())]);
   return (
     <BannersManager
-      now={Date.now()}
+      now={now.getTime()}
       banners={banners.map((b) => ({
         id: b.id,
         placement: b.placement,

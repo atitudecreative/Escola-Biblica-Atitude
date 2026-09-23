@@ -43,7 +43,7 @@ export function GradeSubmissionForm({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const res = await run({ submissionId, status: status ?? suggestion, score: numeric, feedback });
-    if (res?.ok && nextHref) router.push(nextHref);
+    if (res?.ok && nextHref) setTimeout(() => router.push(nextHref), 0);
   }
 
   return (
@@ -135,7 +135,7 @@ export function GradeAttemptForm({
       attemptId,
       answers: manual.map((a) => ({ answerId: a.answerId, pointsAwarded: num(grades[a.answerId].points), feedback: grades[a.answerId].feedback })),
     });
-    if (res?.ok && nextHref) router.push(nextHref);
+    if (res?.ok && nextHref) setTimeout(() => router.push(nextHref), 0);
   }
 
   return (

@@ -145,7 +145,7 @@ export default async function CourseBuilderPage(props: PageProps<"/teacher/cours
       )}
 
       <nav aria-label="Seções do curso" className="-mx-4 mb-6 overflow-x-auto border-b border-border px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
-        <ul className="-mb-px flex gap-1">
+        <ul className="flex gap-1">
           {TABS.map((t) => (
             <li key={t.key}>
               <Link
@@ -154,7 +154,7 @@ export default async function CourseBuilderPage(props: PageProps<"/teacher/cours
                 aria-current={tab === t.key ? "page" : undefined}
                 className={cn(
                   "relative inline-flex h-10 shrink-0 items-center gap-2 px-3 text-sm font-medium whitespace-nowrap transition-colors",
-                  "after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:rounded-full",
+                  "after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full",
                   tab === t.key ? "text-fg after:bg-primary" : "text-muted hover:text-fg after:bg-transparent",
                 )}
               >

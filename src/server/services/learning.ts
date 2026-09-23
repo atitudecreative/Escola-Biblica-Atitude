@@ -163,7 +163,7 @@ export async function continueLearning(userId: string, take = 3) {
     orderBy: [{ lastAccessedAt: { sort: "desc", nulls: "last" } }, { enrolledAt: "desc" }],
     take,
     include: {
-      course: { select: { id: true, slug: true, title: true, coverUrl: true, category: { select: { name: true } }, instructor: { select: { name: true } } } },
+      course: { select: { id: true, slug: true, title: true, coverUrl: true, category: { select: { name: true, position: true } }, instructor: { select: { name: true } } } },
       lastLesson: { select: { id: true, title: true, module: { select: { title: true } } } },
     },
   });

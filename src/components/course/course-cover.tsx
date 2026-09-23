@@ -44,9 +44,10 @@ export function CourseCover({
   const p = PALETTES[(tone ?? h) % PALETTES.length];
   const variant = (h >> 4) % 3;
   const words = title.split(" ");
-  const titleSize = { sm: "text-[0.95rem]", md: "text-[1.35rem]", lg: "text-[2rem] sm:text-[2.4rem]" }[size];
+  // Tipografia proporcional à largura da capa (container queries): nunca estoura o quadro.
+  const titleSize = { sm: "clamp(0.8rem, 8cqw, 1.5rem)", md: "clamp(0.95rem, 7.4cqw, 2.1rem)", lg: "clamp(1.25rem, 6.6cqw, 2.6rem)" }[size];
   return (
-    <div className={cn("relative aspect-[16/9] overflow-hidden", className)} style={{ background: p.bg, color: p.fg }} aria-hidden>
+    <div className={cn("relative aspect-[16/9] overflow-hidden [container-type:inline-size]", className)} style={{ background: p.bg, color: p.fg }} aria-hidden>
       <svg className="absolute inset-0 size-full" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice">
         {variant === 0 &&
           Array.from({ length: 7 }).map((_, i) => (
@@ -66,12 +67,12 @@ export function CourseCover({
       </svg>
       <div className="absolute inset-0 flex flex-col justify-end p-[7%]">
         {category && size !== "sm" && (
-          <span className="mb-1.5 text-[0.625rem] font-semibold tracking-[0.14em] uppercase" style={{ color: p.accent }}>
+          <span className="mb-[2.5cqw] text-[clamp(0.55rem,2.6cqw,0.75rem)] font-semibold tracking-[0.14em] uppercase" style={{ color: p.accent }}>
             {category}
           </span>
         )}
-        <span className={cn("max-w-[85%] font-display leading-[1.08] tracking-tight text-balance", titleSize)}>
-          {words.length > 7 ? words.slice(0, 7).join(" ") + "…" : title}
+        <span className="line-clamp-3 max-w-[88%] font-display leading-[1.08] tracking-tight text-balance" style={{ fontSize: titleSize }}>
+          {words.length > 9 ? words.slice(0, 9).join(" ") + "…" : title}
         </span>
       </div>
     </div>

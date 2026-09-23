@@ -56,7 +56,11 @@ export function PermissionMatrix({ roles, groups, locked }: { roles: Role[]; gro
   function toggleGroup(r: Role, g: Group, on: boolean) {
     setMatrix((m) => {
       const set = new Set(m[r.id]);
-      for (const p of g.perms) if (!isLocked(r, p.key)) (on ? set.add(p.key) : set.delete(p.key));
+      for (const p of g.perms) {
+        if (isLocked(r, p.key)) continue;
+        if (on) set.add(p.key);
+        else set.delete(p.key);
+      }
       return { ...m, [r.id]: [...set].sort() };
     });
   }

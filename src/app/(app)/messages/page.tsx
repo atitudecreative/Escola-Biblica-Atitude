@@ -30,7 +30,7 @@ export default async function MessagesPage({ searchParams }: PageProps<"/message
         <MessagesSquare className="size-5" aria-hidden />
       </div>
       <h2 className="mt-4 text-h4 text-fg">Selecione uma conversa</h2>
-      <p className="mt-1 max-w-sm text-small text-muted">Escolha uma conversa na lista ou comece uma nova com seus professores ou com o suporte.</p>
+      <p className="mt-1 max-w-sm text-small text-muted">Escolha uma conversa na lista ou comece uma nova pelo botão “Nova”.</p>
     </div>
   );
 }

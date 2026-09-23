@@ -202,10 +202,9 @@ export function SaveBar({ dirty, pending, onReset, label = "Salvar alterações"
     <div
       className={cn(
         "flex items-center justify-between gap-3",
-        floating
+        floating && dirty
           ? "sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-10 -mx-4 mt-6 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-xl sm:border sm:shadow-md md:bottom-0"
-          : "border-t border-border pt-4",
-        floating && !dirty && "sm:shadow-none",
+          : cn("border-t border-border pt-4", floating && "mt-6"),
       )}
     >
       <p className="text-small text-muted" aria-live="polite">{dirty ? "Você tem alterações não salvas." : "Tudo salvo."}</p>

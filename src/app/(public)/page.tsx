@@ -70,7 +70,7 @@ export default async function HomePage() {
             <div className="grid gap-4 md:grid-cols-3">
               {continuing.map((e) => (
                 <Link key={e.id} href={`/courses/${e.course.slug}`} className="group flex gap-4 rounded-xl border border-border bg-surface p-3 shadow-xs transition hover:border-border-strong hover:shadow-md">
-                  <CourseCover title={e.course.title} src={e.course.coverUrl} size="sm" className="w-28 shrink-0 rounded-lg" />
+                  <CourseCover title={e.course.title} tone={e.course.category?.position} src={e.course.coverUrl} size="sm" className="w-28 shrink-0 rounded-lg" />
                   <div className="min-w-0 flex-1 py-1">
                     <p className="line-clamp-2 text-h4 group-hover:text-primary">{e.course.title}</p>
                     <p className="mt-1 truncate text-caption text-subtle">{e.lastLesson?.title ?? "Comece pela primeira aula"}</p>
