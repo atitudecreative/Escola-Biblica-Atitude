@@ -22,9 +22,10 @@ services:
     # Disco persistente e pre-deploy exigem plano pago (starter ou superior).
     plan: starter
     branch: main
-    buildCommand: npm ci --include=dev && npm run build
-    # Migrações + perfis/permissões/admin inicial (idempotente, não apaga dados).
-    preDeployCommand: npx prisma migrate deploy && npm run db:bootstrap
+    # As migrações rodam no build porque ele pré-renderiza páginas que leem o banco.
+    buildCommand: npm ci --include=dev && npx prisma migrate deploy && npm run build
+    # Perfis, permissões e admin inicial (idempotente, não apaga dados).
+    preDeployCommand: npm run db:bootstrap
     startCommand: npm start
     healthCheckPath: /robots.txt
     disk:
