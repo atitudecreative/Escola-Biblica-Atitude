@@ -362,7 +362,7 @@
 .hero-progress { animation-name: hero-progress; animation-timing-function: linear; animation-fill-mode: forwards; }
 
 /* Fundo decorativo de todas as páginas (preto + #C7E600), gerado por scripts/gen-backdrop.mjs.
-   Três painéis que se repetem na vertical; em telas estreitas mantém a escala (recorta nas laterais). */
+   Composição vertical que se repete; em telas estreitas mantém a escala (recorta nas laterais). */
 .page-backdrop {
   background-image: url("/bg/pattern-light.svg");
   background-repeat: repeat-y;
