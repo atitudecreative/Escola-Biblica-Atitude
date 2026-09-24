@@ -260,7 +260,7 @@ model Course {
   faq                   Json         @default("[]") // [{ question, answer }]
   workloadHours         Int          @default(0) // carga horária do certificado
   durationMinutes       Int          @default(0) // soma das aulas (cache)
-  sequential            Boolean      @default(false) // libera aulas em ordem
+  sequential            Boolean      @default(true) // libera aulas em ordem (aula seguinte só após concluir a anterior)
   certificateEnabled    Boolean      @default(true)
   certificateTemplateId String?
   isFeatured            Boolean      @default(false)
@@ -469,6 +469,9 @@ model LessonProgress {
   status          LessonProgressStatus @default(IN_PROGRESS)
   positionSeconds Int                  @default(0) // onde parou
   watchedSeconds  Int                  @default(0) // tempo efetivamente assistido
+  watchedSegments Int[]                @default([]) // trechos de 5s do vídeo assistidos de fato (anti-pulo)
+  mediaSeconds    Int?                 // duração real informada pelo player (só aumenta)
+  lastBeatAt      DateTime?            // último registro do player: limita quanto pode avançar por tempo real
   completedAt     DateTime?
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt

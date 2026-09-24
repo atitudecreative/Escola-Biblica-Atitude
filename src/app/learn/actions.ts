@@ -5,7 +5,7 @@ import { db } from "@/server/db";
 import { assertUser } from "@/server/auth/guards";
 import { parseInput, runAction } from "@/server/action";
 import { lessonAccess } from "@/server/services/access";
-import { completeLesson, lockedLessonIds, recordProgress } from "@/server/services/learning";
+import { completeLesson, lockedLessonIds, recordProgress, recordWatch, videoWatchedEnough } from "@/server/services/learning";
 import { saveAnswers, startAttempt, submitAssignment, submitAttempt, type AnswerInput } from "@/server/services/assessments";
 import { ForbiddenError, NotFoundError } from "@/server/errors";
 import { rateLimit } from "@/server/rate-limit";
@@ -30,6 +30,26 @@ export async function recordProgressAction(input: { lessonId: string; position: 
   });
 }
 
+/** Trechos do vídeo assistidos (player próprio ou embed). Retorna a cobertura validada pelo servidor. */
+export async function recordWatchAction(input: { lessonId: string; segments: number[]; position: number; duration: number }) {
+  return runAction("record_watch", async () => {
+    const data = parseInput(
+      z.object({ lessonId: id, segments: z.array(z.number().int().min(0).max(20_000)).max(400), position: z.number().min(0).max(86_400), duration: z.number().min(0).max(86_400) }),
+      input,
+    );
+    const { user, access } = await assertEnrolledAccess(data.lessonId);
+    if (!access.enrollment) return null; // gestores/prévia não geram progresso
+    const lesson = access.lesson!;
+    if (lesson.type !== "VIDEO") throw new ForbiddenError();
+    const locked = await lockedLessonIds(lesson.courseId, user.id, lesson.course.sequential);
+    if (locked.has(lesson.id)) throw new ForbiddenError("Conclua as aulas anteriores primeiro.");
+    await rateLimit("watch", 30, 60_000, user.id);
+    const res = await recordWatch(user.id, data.lessonId, data);
+    if (res.completed) refresh();
+    return { coverage: res.coverage, completed: res.completed, courseCompleted: res.courseCompleted };
+  });
+}
+
 export async function completeLessonAction(lessonId: string) {
   return runAction("complete_lesson", async () => {
     const lid = parseInput(id, lessonId);
@@ -41,6 +61,9 @@ export async function completeLessonAction(lessonId: string) {
     }
     const locked = await lockedLessonIds(lesson.courseId, user.id, lesson.course.sequential);
     if (locked.has(lid)) throw new ForbiddenError("Conclua as aulas anteriores primeiro.");
+    if (lesson.type === "VIDEO" && (lesson.videoUrl || lesson.mediaFileId) && !(await videoWatchedEnough(user.id, lesson))) {
+      throw new ForbiddenError("Assista ao vídeo até o fim para concluir esta aula.");
+    }
     const res = await completeLesson(user.id, lid);
     refresh();
     return res;

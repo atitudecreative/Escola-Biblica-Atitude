@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { EyeOff, FileText, HelpCircle, Link2, Lock, MessageSquare, MessagesSquare } from "lucide-react";
 import { requireUserPage } from "@/server/auth/guards";
 import { getLearnData } from "@/server/services/learn-page";
+import { createMediaToken } from "@/server/media-token";
+import { getSettings } from "@/server/settings";
 import { LearnShell } from "@/components/learn/learn-shell";
 import { AudioLesson, CompleteBar, DocumentLesson, LinkLesson, VideoLesson } from "@/components/learn/lesson-media";
 import { QuizRunner } from "@/components/learn/quiz-runner";
@@ -23,13 +25,19 @@ export const metadata: Metadata = { robots: { index: false } };
 export default async function LessonPage({ params }: PageProps<"/learn/[courseId]/[lessonId]">) {
   const { courseId, lessonId } = await params;
   const user = await requireUserPage();
-  const data = await getLearnData(user, courseId, lessonId);
+  const [data, general] = await Promise.all([getLearnData(user, courseId, lessonId), getSettings("general")]);
   if (data.status === "not_found") notFound();
   if (data.status !== "ok") redirect(`/courses/${data.slug}?acesso=${data.status}`);
 
   const { course, lesson, next, prev } = data;
   const fileUrl = lesson.mediaFile ? `/api/files/${lesson.mediaFile.id}` : null;
-  const videoSrc = lesson.videoProvider === "UPLOAD" ? fileUrl : lesson.videoUrl;
+  // Vídeo enviado: endereço pessoal, temporário e que só toca dentro do player (ver /api/stream).
+  const videoSrc =
+    lesson.videoProvider === "UPLOAD"
+      ? lesson.mediaFile && !data.isLocked
+        ? `/api/stream/${createMediaToken(lesson.mediaFile.id, user.id)}`
+        : null
+      : lesson.videoUrl;
   const enrolled = data.enrolled;
   const canModerate = data.manager || user.permissions.has("courses.manage_any");
   const nextInfo = next ? { id: next.id, title: next.title, locked: data.outline.flatMap((m) => m.lessons).find((l) => l.id === next.id)?.locked } : null;
@@ -67,6 +75,9 @@ export default async function LessonPage({ params }: PageProps<"/learn/[courseId
         enrolled={enrolled}
         next={nextInfo}
         certificateEnabled={course.certificateEnabled}
+        watchedSegments={data.watchedSegments}
+        durationSeconds={Math.max(lesson.durationSeconds, data.mediaSeconds)}
+        watermark={`${user.name} · ${user.email}`}
       />
     );
   } else if (lesson.type === "QUIZ" && data.quiz) {
@@ -108,10 +119,11 @@ export default async function LessonPage({ params }: PageProps<"/learn/[courseId
   }
 
   const showOverview = lesson.type !== "TEXT" && (lesson.summary || lesson.content);
-  const commentCount = data.comments.filter((c) => !c.deletedAt).length;
+  const commentCount = data.comments.length;
 
   return (
     <LearnShell
+      brand={{ name: general.platformName, logoUrl: general.logoUrl }}
       course={{ id: course.id, slug: course.slug, title: course.title }}
       lessonId={lesson.id}
       outline={data.outline}

@@ -5,6 +5,7 @@ import type { Prisma, CourseLevel } from "@prisma/client";
 import type { SessionUser } from "@/server/auth/session";
 import { canManageCourse } from "./access";
 import { previewEmbedUrl } from "@/lib/video";
+import { createMediaToken } from "@/server/media-token";
 
 const cardSelect = {
   id: true,
@@ -306,8 +307,16 @@ function toShowcase(c: ShowcaseRow, map: Map<string, { progress: number; complet
 }
 
 /** Fonte tocável de uma aula de vídeo (sem som, em loop) ou null se o link não for reconhecido. */
-function previewSource(l: { title: string; videoProvider: string | null; videoUrl: string | null; mediaFileId: string | null }): LessonPreview | null {
-  if (l.videoProvider === "UPLOAD") return l.mediaFileId ? { lessonTitle: l.title, kind: "video", src: `/api/files/${l.mediaFileId}` } : null;
+function previewSource(
+  l: { title: string; isPreview: boolean; videoProvider: string | null; videoUrl: string | null; mediaFileId: string | null },
+  userId: string | undefined,
+): LessonPreview | null {
+  if (l.videoProvider === "UPLOAD") {
+    if (!l.mediaFileId) return null;
+    // Aula de prévia é amostra aberta; aula 01 de inscrito passa pelo stream protegido.
+    if (l.isPreview) return { lessonTitle: l.title, kind: "video", src: `/api/files/${l.mediaFileId}` };
+    return userId ? { lessonTitle: l.title, kind: "video", src: `/api/stream/${createMediaToken(l.mediaFileId, userId)}` } : null;
+  }
   const url = l.videoUrl ?? "";
   if (l.videoProvider === "YOUTUBE" || l.videoProvider === "VIMEO" || l.videoProvider === "PANDA") {
     const src = previewEmbedUrl(l.videoProvider, url);
@@ -322,7 +331,7 @@ function previewSource(l: { title: string; videoProvider: string | null; videoUr
  * ou o usuário já está inscrito); senão, a primeira aula de vídeo marcada como prévia.
  * Mesma regra de acesso de `lessonAccess`/arquivos: nada fechado vaza pela Home.
  */
-async function attachPreviews(courses: ShowcaseCourse[]) {
+async function attachPreviews(courses: ShowcaseCourse[], userId: string | undefined) {
   const ids = [...new Set(courses.map((c) => c.id))];
   if (!ids.length) return;
   const lessons = await db.lesson.findMany({
@@ -338,7 +347,7 @@ async function attachPreviews(courses: ShowcaseCourse[]) {
     const enrolled = c.enrollment !== "none";
     const pick =
       first && first.type === "VIDEO" && (first.isPreview || enrolled) ? first : list.find((l) => l.type === "VIDEO" && l.isPreview);
-    c.preview = pick ? previewSource(pick) : null;
+    c.preview = pick ? previewSource(pick, userId) : null;
   }
 }
 
@@ -362,7 +371,7 @@ export async function homeShowcase(userId: string | undefined, featuredIds: stri
   // No explorador, o que ainda não apareceu nos destaques vem primeiro (ordem estável).
   const shown = new Set(featured.map((c) => c.id));
   const catalog = [...catalogRows.filter((c) => !shown.has(c.id)), ...catalogRows.filter((c) => shown.has(c.id))].map((c) => toShowcase(c, map));
-  await attachPreviews([...featured, ...catalog]);
+  await attachPreviews([...featured, ...catalog], userId);
   const popular = await popularIds();
   const since = Date.now() - NEW_DAYS * 86_400_000;
   const published = new Map([...featuredRows, ...catalogRows].map((r) => [r.id, r.publishedAt]));

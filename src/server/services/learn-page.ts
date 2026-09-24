@@ -28,7 +28,7 @@ export async function getLearnData(user: SessionUser, courseId: string, lessonId
 
   const enrollment = access.enrollment;
   const [progress, locked, lesson, isFavorite, comments, certificate] = await Promise.all([
-    enrollment ? db.lessonProgress.findMany({ where: { userId: user.id, courseId }, select: { lessonId: true, status: true, positionSeconds: true } }) : Promise.resolve([]),
+    enrollment ? db.lessonProgress.findMany({ where: { userId: user.id, courseId }, select: { lessonId: true, status: true, positionSeconds: true, watchedSegments: true, mediaSeconds: true } }) : Promise.resolve([]),
     enrollment ? lockedLessonIds(courseId, user.id, course.sequential) : Promise.resolve(new Set<string>()),
     db.lesson.findUniqueOrThrow({
       where: { id: lessonId },
@@ -42,12 +42,13 @@ export async function getLearnData(user: SessionUser, courseId: string, lessonId
     }),
     db.favorite.findUnique({ where: { userId_lessonId: { userId: user.id, lessonId } } }),
     db.lessonComment.findMany({
-      where: { lessonId, parentId: null },
+      // Comentários removidos não aparecem (nem as respostas deles).
+      where: { lessonId, parentId: null, deletedAt: null },
       orderBy: { createdAt: "desc" },
       take: 50,
       include: {
         user: { select: { id: true, name: true, avatarUrl: true, roles: { select: { role: { select: { key: true } } } } } },
-        replies: { orderBy: { createdAt: "asc" }, include: { user: { select: { id: true, name: true, avatarUrl: true, roles: { select: { role: { select: { key: true } } } } } } } },
+        replies: { where: { deletedAt: null }, orderBy: { createdAt: "asc" }, include: { user: { select: { id: true, name: true, avatarUrl: true, roles: { select: { role: { select: { key: true } } } } } } } },
       },
     }),
     enrollment ? db.certificate.findUnique({ where: { enrollmentId: enrollment.id }, select: { code: true } }) : Promise.resolve(null),
@@ -82,6 +83,8 @@ export async function getLearnData(user: SessionUser, courseId: string, lessonId
     requiredBefore: requiredBefore ?? (isLocked ? firstLocked : null),
     completed: progressMap.get(lessonId)?.status === "COMPLETED",
     resumeAt: progressMap.get(lessonId)?.positionSeconds ?? 0,
+    watchedSegments: progressMap.get(lessonId)?.watchedSegments ?? [],
+    mediaSeconds: progressMap.get(lessonId)?.mediaSeconds ?? 0,
     prev: idx > 0 ? flat[idx - 1] : null,
     next: idx >= 0 && idx < flat.length - 1 ? flat[idx + 1] : null,
     outline: course.modules.map((m) => ({
