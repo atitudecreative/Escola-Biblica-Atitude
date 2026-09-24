@@ -366,8 +366,8 @@ export async function homeShowcase(userId: string | undefined, featuredIds: stri
   featuredRows.sort((a, b) => (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99));
 
   const map = await enrollmentMap(userId, [...new Set([...featuredRows, ...catalogRows].map((c) => c.id))]);
-  // Três destaques: uma linha limpa no desktop, sem card órfão.
-  const featured = featuredRows.slice(0, 3).map((c) => toShowcase(c, map));
+  // Quatro destaques: uma linha limpa no desktop, sem card órfão.
+  const featured = featuredRows.slice(0, 4).map((c) => toShowcase(c, map));
   // No explorador, o que ainda não apareceu nos destaques vem primeiro (ordem estável).
   const shown = new Set(featured.map((c) => c.id));
   const catalog = [...catalogRows.filter((c) => !shown.has(c.id)), ...catalogRows.filter((c) => shown.has(c.id))].map((c) => toShowcase(c, map));

@@ -13,7 +13,7 @@ type Area = { slug: string; name: string; icon: string | null; count: number };
 export function CategoryExplorer({ areas, courses, total, loggedIn }: { areas: Area[]; courses: ShowcaseCourse[]; total: number; loggedIn: boolean }) {
   const [area, setArea] = useState<string | null>(null);
   const uid = useId();
-  const visible = useMemo(() => (area ? courses.filter((c) => c.category?.slug === area) : courses).slice(0, 6), [area, courses]);
+  const visible = useMemo(() => (area ? courses.filter((c) => c.category?.slug === area) : courses).slice(0, 8), [area, courses]);
   const current = areas.find((a) => a.slug === area);
   const seeAll = current ? `/courses?category=${current.slug}` : "/courses";
 
