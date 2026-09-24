@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { BarChart3, Volume2, VolumeX } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { CourseCard } from "@/components/course/course-card";
 import { CourseCover } from "@/components/course/course-cover";
 import { EnrollButton } from "@/components/course/course-actions";
@@ -34,7 +34,7 @@ export function CourseShowcase({
 }) {
   const gridRef = useRef<HTMLDivElement>(null);
   return (
-    <div ref={gridRef} className={cn("grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 xl:grid-cols-3", className)}>
+    <div ref={gridRef} className={cn("grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4", className)}>
       {courses.map((c) => (
         <HoverShell key={c.id} course={c} loggedIn={loggedIn} gridRef={gridRef}>
           <CourseCard
@@ -52,9 +52,9 @@ export function CourseShowcase({
   );
 }
 
-export function ShowcaseSkeleton({ count = 3 }: { count?: number }) {
+export function ShowcaseSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 gap-x-5 gap-y-6 sm:grid-cols-2 xl:grid-cols-3" aria-hidden>
+    <div className="grid grid-cols-1 gap-x-5 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-hidden>
       {Array.from({ length: count }).map((_, i) => (
         <div key={i}>
           <div className="skeleton aspect-[16/9] rounded-xl" />
@@ -74,7 +74,7 @@ const canHover = () =>
 
 /**
  * Envolve o card: após uma pausa curta do mouse, abre por cima dele um cartão maior que
- * "cresce" a partir do próprio card e toca, sem som, a prévia da aula. Só em dispositivos
+ * "cresce" a partir do próprio card e toca a prévia da aula com o som entrando em fade. Só em dispositivos
  * com mouse — no toque e no teclado vale o painel expandido do clique.
  */
 function HoverShell({
@@ -136,7 +136,6 @@ function hoursLabel(min: number) {
 
 function HoverPreview({ course, loggedIn, pos }: { course: ShowcaseCourse; loggedIn: boolean; pos: PreviewPos }) {
   const boxRef = useRef<HTMLDivElement>(null);
-  const [muted, setMuted] = useState(true);
   const [playing, setPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [reduced] = useState(prefersReducedMotion);
@@ -161,9 +160,31 @@ function HoverPreview({ course, loggedIn, pos }: { course: ShowcaseCourse; logge
     v.play().catch(() => {});
   }, []);
 
+  // Som entra em fade (0 → 70% em ~1,5s) assim que a prévia começa. O navegador só permite
+  // som depois que a pessoa já interagiu com a página (um clique/tecla); antes disso fica mudo.
   useEffect(() => {
-    if (videoRef.current) videoRef.current.muted = muted;
-  }, [muted]);
+    const v = videoRef.current;
+    if (!playing || !v) return;
+    const nav = navigator as Navigator & { userActivation?: { hasBeenActive: boolean } };
+    if (nav.userActivation && !nav.userActivation.hasBeenActive) return;
+    let raf = 0;
+    const start = performance.now();
+    v.volume = 0;
+    v.muted = false;
+    if (v.paused) {
+      // Bloqueado pela política de autoplay: volta ao mudo e segue a prévia.
+      v.muted = true;
+      void v.play().catch(() => {});
+      return;
+    }
+    const step = (t: number) => {
+      const k = Math.min(1, (t - start) / 1500);
+      v.volume = 0.7 * k * k;
+      if (k < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [playing]);
 
   const p = course.preview;
   const meta = ["Curso", hoursLabel(course.durationMinutes), course.year].filter(Boolean).join(" · ");
@@ -215,16 +236,6 @@ function HoverPreview({ course, loggedIn, pos }: { course: ShowcaseCourse; logge
       </Link>
 
       <div className="relative p-5">
-        {p?.kind === "video" && playing && (
-          <button
-            type="button"
-            onClick={() => setMuted((m) => !m)}
-            aria-label={muted ? "Ativar som da prévia" : "Tirar o som da prévia"}
-            className="absolute -top-14 right-3 flex size-10 items-center justify-center rounded-lg bg-primary text-primary-fg shadow-md transition-transform hover:scale-105"
-          >
-            {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
-          </button>
-        )}
         <p className="text-h3 leading-tight">{course.title}</p>
         {course.excerpt && <p className="mt-1.5 line-clamp-2 text-sm text-muted">{course.excerpt}</p>}
         <div className="mt-3 flex items-center gap-2">
