@@ -23,7 +23,9 @@ Idioma da interface: **português do Brasil**. Código (nomes) em inglês; comen
 - `src/lib/**` — isomórfico: `permissions.ts` (catálogo RBAC), `labels.ts` (rótulos/tons de enums), `format.ts` (datas/números pt-BR), `utils.ts` (`cn`, `slugify`), `validation/*` (schemas Zod compartilhados).
 - Server Actions ficam em `actions.ts` ao lado da rota (`"use server"`), finas: validam com Zod, chamam o serviço, `revalidatePath`/`refresh()`.
 - No client use `useAction(action, {errorToast})` (`src/hooks/use-action.ts`) → `{run, pending, error, fieldErrors}`.
-- Rotas: `(auth)` login/cadastro; `(app)` área logada com AppShell (sidebar por perfil em `components/layout/nav-config.ts`); `(public)` site; `learn/` player imersivo.
+- Rotas: `(auth)` login/cadastro; `(app)` área logada e `(public)` site, ambos no mesmo `AppShell` (público usa `bare`; visitante vê `PUBLIC_NAV`, logado a sidebar por perfil de `components/layout/nav-config.ts`); `learn/` player imersivo.
+- Sidebar: expandida 248px ↔ trilho 72px (`Ctrl+B`, cookie `SIDEBAR_COOKIE`, lido no servidor); tablet é sempre trilho; celular usa gaveta + barra inferior. Classes `sb-label`/`sb-rail`/`sb-only-*` em `globals.css`.
+- Home (`(public)/(home)`): hero = primeiro banner ativo + sumário do curso divulgado; cursos em `components/home/course-showcase.tsx` (card expande em painel com FLIP; reusa `EnrollButton`).
 - Next 16: `params`/`searchParams` são Promises (`PageProps<"/rota/[id]">`); `proxy.ts` (não middleware).
 
 ## Design system (src/components/ui) — reutilize, não duplique
@@ -42,4 +44,4 @@ Tokens (use só estes): `bg-bg bg-surface bg-surface-2 bg-surface-3 border-borde
 ## Verificação
 `npx tsc --noEmit` · `npx eslint <arquivos>` · dados demo: `npm run db:seed` (senha `Demo@2026`: aluno@ / professor@ / gestor@ / admin@demo.eba).
 QA visual: `CHROME=/opt/pw-browsers/chromium node scripts/shot.mjs <aluno|professor|gestor|admin|-> /tmp/claude-0/shots/<nome> /rota1 /rota2` (env W/H, THEME=dark, FULL=1).
-QA automatizado (servidor rodando em :3000): `node scripts/qa/crawl.mjs [aluno professor gestor admin]` (todas as rotas da navegação, desktop + 390px: status, erros de console, overflow) · `node scripts/qa/auth-flow.mjs` (cadastro → recuperação → redefinição → login) · `scripts/qa/player.mjs`, `quiz.mjs`, `search.mjs`. Testes unitários: `npm test`.
+QA automatizado (servidor rodando em :3000): `node scripts/qa/crawl.mjs [aluno professor gestor admin]` (todas as rotas da navegação, desktop + 390px: status, erros de console, overflow) · `node scripts/qa/auth-flow.mjs` (cadastro → recuperação → redefinição → login) · `scripts/qa/player.mjs`, `quiz.mjs`, `search.mjs`, `home.mjs <prefixo> [largura] [perfil|-]` (expansão do card, foco, Esc). Testes unitários: `npm test`.
