@@ -206,6 +206,7 @@ const showcaseSelect = {
   priceCents: true,
   category: { select: { name: true, slug: true, position: true } },
   instructor: { select: { id: true, name: true, avatarUrl: true } },
+  tags: { select: { tag: { select: { name: true } } }, take: 3 },
   _count: { select: { lessons: { where: { isPublished: true } } } },
 } satisfies Prisma.CourseSelect;
 
@@ -239,7 +240,13 @@ export type ShowcaseCourse = {
   instructor: { id: string; name: string; avatarUrl: string | null };
   enrollment: "none" | "active" | "completed";
   progress: number | null;
+  year: number | null;
+  tags: string[];
+  /** Prévia tocada ao passar o mouse (só aulas liberadas para quem está vendo). */
+  preview: LessonPreview | null;
 };
+
+export type LessonPreview = { lessonTitle: string; kind: "video"; src: string; webm?: string } | { lessonTitle: string; kind: "embed"; src: string };
 
 function toShowcase(c: ShowcaseRow, map: Map<string, { progress: number; completed: boolean }>): ShowcaseCourse {
   const e = map.get(c.id);
@@ -261,7 +268,53 @@ function toShowcase(c: ShowcaseRow, map: Map<string, { progress: number; complet
     instructor: c.instructor,
     enrollment: e ? (e.completed ? "completed" : "active") : "none",
     progress: e?.progress ?? null,
+    year: c.publishedAt ? c.publishedAt.getFullYear() : null,
+    tags: c.tags.map((t) => t.tag.name),
+    preview: null,
   };
+}
+
+/** Fonte tocável de uma aula de vídeo (sem som, em loop) ou null se o link não for reconhecido. */
+function previewSource(l: { title: string; videoProvider: string | null; videoUrl: string | null; mediaFileId: string | null }): LessonPreview | null {
+  if (l.videoProvider === "UPLOAD") return l.mediaFileId ? { lessonTitle: l.title, kind: "video", src: `/api/files/${l.mediaFileId}` } : null;
+  const url = l.videoUrl ?? "";
+  if (l.videoProvider === "YOUTUBE") {
+    const id = url.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/)?.[1];
+    return id
+      ? { lessonTitle: l.title, kind: "embed", src: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&controls=0&loop=1&playlist=${id}&modestbranding=1&playsinline=1&rel=0` }
+      : null;
+  }
+  if (l.videoProvider === "VIMEO") {
+    const id = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)?.[1];
+    return id ? { lessonTitle: l.title, kind: "embed", src: `https://player.vimeo.com/video/${id}?background=1&autoplay=1&muted=1&loop=1` } : null;
+  }
+  if (!url.startsWith("/") && !url.startsWith("https://")) return null;
+  return { lessonTitle: l.title, kind: "video", src: url, webm: /^\/demo\/.+\.mp4$/.test(url) ? url.replace(/\.mp4$/, ".webm") : undefined };
+}
+
+/**
+ * Prévia de cada curso: a aula 01 se for vídeo e estiver liberada (marcada como prévia,
+ * ou o usuário já está inscrito); senão, a primeira aula de vídeo marcada como prévia.
+ * Mesma regra de acesso de `lessonAccess`/arquivos: nada fechado vaza pela Home.
+ */
+async function attachPreviews(courses: ShowcaseCourse[]) {
+  const ids = [...new Set(courses.map((c) => c.id))];
+  if (!ids.length) return;
+  const lessons = await db.lesson.findMany({
+    where: { courseId: { in: ids }, isPublished: true, course: { status: "PUBLISHED" } },
+    orderBy: [{ module: { position: "asc" } }, { position: "asc" }],
+    select: { courseId: true, title: true, type: true, isPreview: true, videoProvider: true, videoUrl: true, mediaFileId: true },
+  });
+  const byCourse = new Map<string, typeof lessons>();
+  for (const l of lessons) byCourse.set(l.courseId, [...(byCourse.get(l.courseId) ?? []), l]);
+  for (const c of courses) {
+    const list = byCourse.get(c.id) ?? [];
+    const first = list[0];
+    const enrolled = c.enrollment !== "none";
+    const pick =
+      first && first.type === "VIDEO" && (first.isPreview || enrolled) ? first : list.find((l) => l.type === "VIDEO" && l.isPreview);
+    c.preview = pick ? previewSource(pick) : null;
+  }
 }
 
 /**
@@ -284,6 +337,7 @@ export async function homeShowcase(userId: string | undefined, featuredIds: stri
   // No explorador, o que ainda não apareceu nos destaques vem primeiro (ordem estável).
   const shown = new Set(featured.map((c) => c.id));
   const catalog = [...catalogRows.filter((c) => !shown.has(c.id)), ...catalogRows.filter((c) => shown.has(c.id))].map((c) => toShowcase(c, map));
+  await attachPreviews([...featured, ...catalog]);
 
   // Curso de cada banner do hero: o que ele divulga (/courses/slug) ou, na falta, o primeiro destaque.
   const fallback = featured[0]?.slug ?? catalog[0]?.slug ?? null;
