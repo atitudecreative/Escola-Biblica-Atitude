@@ -21,7 +21,18 @@ export type HeroBanner = {
  * real do curso divulgado, com módulos numerados como o índice de um livro.
  * Proporção ~3:1 no desktop (1200×400), empilhado no celular.
  */
-export function HomeHero({ banner, course }: { banner: HeroBanner; course: HeroCourse | null }) {
+export function HomeHero({
+  banner,
+  course,
+  headingId = "hero-title",
+  heading: Heading = "h1",
+}: {
+  banner: HeroBanner;
+  course: HeroCourse | null;
+  /** No carrossel, cada slide tem id próprio e usa h2 (o h1 fica no carrossel). */
+  headingId?: string;
+  heading?: "h1" | "h2";
+}) {
   const image = banner.imageUrl;
   const external = banner.ctaHref?.startsWith("http");
   const cta = banner.ctaLabel && banner.ctaHref ? { label: banner.ctaLabel, href: banner.ctaHref } : { label: "Explorar cursos", href: "/courses" };
@@ -41,10 +52,10 @@ export function HomeHero({ banner, course }: { banner: HeroBanner; course: HeroC
     );
     const frame = "group/banner block aspect-[3/1] overflow-hidden rounded-[1.25rem] bg-surface-3 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-bg";
     return (
-      <section aria-labelledby="hero-title">
-        <h1 id="hero-title" className="sr-only">
+      <section aria-labelledby={headingId}>
+        <Heading id={headingId} className="sr-only">
           {banner.title}
-        </h1>
+        </Heading>
         {banner.ctaHref ? (
           external ? (
             <a href={banner.ctaHref} target="_blank" rel="noopener noreferrer" aria-label={label} className={frame}>
@@ -64,7 +75,7 @@ export function HomeHero({ banner, course }: { banner: HeroBanner; course: HeroC
 
   return (
     <section
-      aria-labelledby="hero-title"
+      aria-labelledby={headingId}
       className="relative isolate overflow-hidden rounded-[1.25rem] bg-hero text-white lg:min-h-[400px]"
     >
       <HeroPattern />
@@ -77,9 +88,9 @@ export function HomeHero({ banner, course }: { banner: HeroBanner; course: HeroC
               {banner.eyebrow}
             </p>
           )}
-          <h1 id="hero-title" className="hero-rise mt-4 font-display text-[clamp(2rem,4.2vw,3.25rem)] leading-[1.04] tracking-tight text-balance [animation-delay:60ms]">
+          <Heading id={headingId} className="hero-rise mt-4 font-display text-[clamp(2rem,4.2vw,3.25rem)] leading-[1.04] tracking-tight text-balance [animation-delay:60ms]">
             {banner.title}
-          </h1>
+          </Heading>
           {banner.subtitle && (
             <p className="hero-rise mt-4 max-w-lg text-[1.0625rem] leading-relaxed opacity-85 [animation-delay:120ms]">{banner.subtitle}</p>
           )}

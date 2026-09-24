@@ -21,7 +21,7 @@ import { deleteBannerAction, reorderBannersAction, saveBannerAction, toggleBanne
 export type BannerRow = BannerDraft & { id: string; isActive: boolean; startsAt: string | null; endsAt: string | null };
 
 const PLACEMENTS = {
-  HOME_HERO: { label: "Banner principal da home", hint: "A home exibe só o primeiro banner ativo. Com imagem (ideal 1200×400), só a arte aparece, clicável; título e textos ficam apenas para leitores de tela." },
+  HOME_HERO: { label: "Banner principal da home", hint: "Com mais de um banner ativo, a home alterna entre eles a cada 7 segundos. Com imagem (ideal 1200×400), só a arte aparece, clicável; título e textos ficam apenas para leitores de tela." },
   DASHBOARD: { label: "Painel do aluno", hint: "Aviso em destaque no início da área logada." },
 } as const;
 

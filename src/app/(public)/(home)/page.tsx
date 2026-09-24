@@ -6,6 +6,7 @@ import { getSettings } from "@/server/settings";
 import { catalogFacets, featuredTeachers, homeShowcase } from "@/server/services/catalog";
 import { continueLearning } from "@/server/services/learning";
 import { HomeHero, type HeroBanner } from "@/components/home/home-hero";
+import { HeroCarousel } from "@/components/home/hero-carousel";
 import { CourseShowcase } from "@/components/home/course-showcase";
 import { CategoryExplorer } from "@/components/home/category-explorer";
 import { ContinueLearning, HomeSection, HowItWorks, TeachersStrip, Testimonials } from "@/components/home/home-sections";
@@ -15,16 +16,16 @@ import { EmptyState } from "@/components/ui/empty-state";
 /**
  * Home: vitrine da Escola, não painel. Funil: entender (hero) → retomar (se já estuda)
  * → descobrir (destaques e áreas) → conhecer o curso (card expandido) → inscrever-se.
- * Seções respeitam os interruptores de Admin › Banners e home.
+ * Seções respeitam os interruptores de Admin › Banners e home. Vários banners ativos se alternam.
  */
 export default async function HomePage() {
   const now = new Date();
-  const [home, general, courseSettings, user, banner] = await Promise.all([
+  const [home, general, courseSettings, user, banners] = await Promise.all([
     getSettings("home"),
     getSettings("general"),
     getSettings("courses"),
     getSessionUser(),
-    db.banner.findFirst({
+    db.banner.findMany({
       where: {
         placement: "HOME_HERO",
         isActive: true,
@@ -35,20 +36,24 @@ export default async function HomePage() {
   ]);
   const s = home.sections;
   const [showcase, facets, teachers, continuing] = await Promise.all([
-    homeShowcase(user?.id, home.featuredCourseIds, banner?.ctaHref ?? null),
+    homeShowcase(user?.id, home.featuredCourseIds, banners.map((b) => b.ctaHref)),
     catalogFacets(),
     s.teachers ? featuredTeachers(3) : Promise.resolve([]),
     user && s.continue ? continueLearning(user.id, 3) : Promise.resolve([]),
   ]);
 
-  const hero: HeroBanner = banner ?? {
-    eyebrow: general.platformName,
-    title: general.tagline,
-    subtitle: "Cursos de Bíblia, teologia e liderança, com professores da igreja e certificado ao final.",
-    ctaLabel: "Explorar cursos",
-    ctaHref: "/courses",
-    imageUrl: null,
-  };
+  const slides: HeroBanner[] = banners.length
+    ? banners
+    : [
+        {
+          eyebrow: general.platformName,
+          title: general.tagline,
+          subtitle: "Cursos de Bíblia, teologia e liderança, com professores da igreja e certificado ao final.",
+          ctaLabel: "Explorar cursos",
+          ctaHref: "/courses",
+          imageUrl: null,
+        },
+      ];
   const loggedIn = !!user;
   const areas = facets.categories.filter((c) => c._count.courses > 0).map((c) => ({ slug: c.slug, name: c.name, icon: c.icon, count: c._count.courses }));
   const total = areas.reduce((n, a) => n + a.count, 0) || showcase.catalog.length;
@@ -65,7 +70,17 @@ export default async function HomePage() {
         </p>
       )}
 
-      <HomeHero banner={hero} course={showcase.hero} />
+      {slides.length > 1 ? (
+        <HeroCarousel
+          title={general.platformName}
+          labels={slides.map((b) => b.title)}
+          slides={slides.map((b, i) => (
+            <HomeHero key={i} banner={b} course={showcase.heroes[i] ?? null} heading="h2" headingId={`hero-title-${i}`} />
+          ))}
+        />
+      ) : (
+        <HomeHero banner={slides[0]} course={showcase.heroes[0] ?? null} />
+      )}
 
       <div className="mt-14 space-y-16 lg:mt-16 lg:space-y-20">
         {continuing.length > 0 && (

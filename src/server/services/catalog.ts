@@ -268,7 +268,7 @@ function toShowcase(c: ShowcaseRow, map: Map<string, { progress: number; complet
  * Dados da Home: destaques (ordem do CMS), catálogo para "Explore por área"
  * e o curso do banner principal com o sumário (módulos) para o hero.
  */
-export async function homeShowcase(userId: string | undefined, featuredIds: string[], bannerHref: string | null) {
+export async function homeShowcase(userId: string | undefined, featuredIds: string[], bannerHrefs: (string | null)[]) {
   const [featuredRows, catalogRows] = await Promise.all([
     featuredIds.length
       ? db.course.findMany({ where: { id: { in: featuredIds }, status: "PUBLISHED" }, select: showcaseSelect })
@@ -285,12 +285,13 @@ export async function homeShowcase(userId: string | undefined, featuredIds: stri
   const shown = new Set(featured.map((c) => c.id));
   const catalog = [...catalogRows.filter((c) => !shown.has(c.id)), ...catalogRows.filter((c) => shown.has(c.id))].map((c) => toShowcase(c, map));
 
-  // Curso do hero: o que o banner divulga (/courses/slug) ou o primeiro destaque.
-  const slugFromBanner = bannerHref?.match(/^\/courses\/([^/?#]+)/)?.[1];
-  const heroSlug = slugFromBanner ?? featured[0]?.slug ?? catalog[0]?.slug;
-  const hero = heroSlug
-    ? await db.course.findFirst({
-        where: { slug: heroSlug, status: "PUBLISHED" },
+  // Curso de cada banner do hero: o que ele divulga (/courses/slug) ou, na falta, o primeiro destaque.
+  const fallback = featured[0]?.slug ?? catalog[0]?.slug ?? null;
+  const slugs = (bannerHrefs.length ? bannerHrefs : [null]).map((h) => h?.match(/^\/courses\/([^/?#]+)/)?.[1] ?? fallback);
+  const unique = [...new Set(slugs.filter((x): x is string => !!x))];
+  const rows = unique.length
+    ? await db.course.findMany({
+        where: { slug: { in: unique }, status: "PUBLISHED" },
         select: {
           ...showcaseSelect,
           modules: {
@@ -299,18 +300,20 @@ export async function homeShowcase(userId: string | undefined, featuredIds: stri
           },
         },
       })
-    : null;
+    : [];
+  const bySlug = new Map(
+    rows.map((r) => [
+      r.slug,
+      { ...toShowcase(r, map), modules: r.modules.filter((m) => m._count.lessons > 0).map((m) => ({ id: m.id, title: m.title, lessons: m._count.lessons })) },
+    ]),
+  );
 
   return {
     featured,
     catalog,
-    hero: hero
-      ? {
-          ...toShowcase(hero, map),
-          modules: hero.modules.filter((m) => m._count.lessons > 0).map((m) => ({ id: m.id, title: m.title, lessons: m._count.lessons })),
-        }
-      : null,
+    /** Alinhado a `bannerHrefs` (ou um item, se não houver banners). */
+    heroes: slugs.map((sl) => (sl ? (bySlug.get(sl) ?? null) : null)),
   };
 }
 
-export type HeroCourse = NonNullable<Awaited<ReturnType<typeof homeShowcase>>["hero"]>;
+export type HeroCourse = NonNullable<Awaited<ReturnType<typeof homeShowcase>>["heroes"][number]>;

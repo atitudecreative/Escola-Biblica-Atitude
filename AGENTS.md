@@ -25,7 +25,7 @@ Idioma da interface: **português do Brasil**. Código (nomes) em inglês; comen
 - No client use `useAction(action, {errorToast})` (`src/hooks/use-action.ts`) → `{run, pending, error, fieldErrors}`.
 - Rotas: `(auth)` login/cadastro; `(app)` área logada e `(public)` site, ambos no mesmo `AppShell` (público usa `bare`; visitante vê `PUBLIC_NAV`, logado a sidebar por perfil de `components/layout/nav-config.ts`); `learn/` player imersivo.
 - Sidebar: expandida 248px ↔ trilho 72px (`Ctrl+B`, cookie `SIDEBAR_COOKIE`, lido no servidor); tablet é sempre trilho; celular usa gaveta + barra inferior. Classes `sb-label`/`sb-rail`/`sb-only-*` em `globals.css`.
-- Home (`(public)/(home)`): hero = primeiro banner ativo + sumário do curso divulgado; cursos em `components/home/course-showcase.tsx` (card expande em painel com FLIP; reusa `EnrollButton`).
+- Home (`(public)/(home)`): hero = banners ativos (vários alternam em `hero-carousel.tsx`); com imagem, só a arte clicável; sem imagem, texto + sumário do curso divulgado; cursos em `components/home/course-showcase.tsx` (card expande em painel com FLIP; reusa `EnrollButton`).
 - Next 16: `params`/`searchParams` são Promises (`PageProps<"/rota/[id]">`); `proxy.ts` (não middleware).
 
 ## Design system (src/components/ui) — reutilize, não duplique
