@@ -17,7 +17,8 @@ export type HeroBanner = {
 
 /**
  * Banner principal (único). Conteúdo vem de Admin › Banners (primeiro banner ativo).
- * À direita, o "sumário" real do curso divulgado: módulos numerados como o índice de um livro.
+ * Com imagem: só a arte, clicável (o texto dela já é a mensagem). Sem imagem: texto + "sumário"
+ * real do curso divulgado, com módulos numerados como o índice de um livro.
  * Proporção ~3:1 no desktop (1200×400), empilhado no celular.
  */
 export function HomeHero({ banner, course }: { banner: HeroBanner; course: HeroCourse | null }) {
@@ -25,20 +26,48 @@ export function HomeHero({ banner, course }: { banner: HeroBanner; course: HeroC
   const external = banner.ctaHref?.startsWith("http");
   const cta = banner.ctaLabel && banner.ctaHref ? { label: banner.ctaLabel, href: banner.ctaHref } : { label: "Explorar cursos", href: "/courses" };
 
+  // Banner com imagem: a arte já traz o texto — nada é sobreposto. O banner inteiro vira o link
+  // do CTA e o título fica disponível para leitores de tela.
+  if (image) {
+    const label = banner.ctaLabel ? `${banner.title} — ${banner.ctaLabel}` : banner.title;
+    const img = (
+      // eslint-disable-next-line @next/next/no-img-element -- banner do CMS
+      <img
+        src={image}
+        alt=""
+        fetchPriority="high"
+        className="size-full object-cover transition-transform duration-700 ease-[var(--ease-out-soft)] group-hover/banner:scale-[1.015]"
+      />
+    );
+    const frame = "group/banner block aspect-[3/1] overflow-hidden rounded-[1.25rem] bg-surface-3 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-bg";
+    return (
+      <section aria-labelledby="hero-title">
+        <h1 id="hero-title" className="sr-only">
+          {banner.title}
+        </h1>
+        {banner.ctaHref ? (
+          external ? (
+            <a href={banner.ctaHref} target="_blank" rel="noopener noreferrer" aria-label={label} className={frame}>
+              {img}
+            </a>
+          ) : (
+            <Link href={banner.ctaHref} aria-label={label} className={frame}>
+              {img}
+            </Link>
+          )
+        ) : (
+          <div className={frame}>{img}</div>
+        )}
+      </section>
+    );
+  }
+
   return (
     <section
       aria-labelledby="hero-title"
       className="relative isolate overflow-hidden rounded-[1.25rem] bg-hero text-white lg:min-h-[400px]"
     >
-      {image ? (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element -- banner do CMS */}
-          <img src={image} alt="" className="absolute inset-0 -z-10 size-full object-cover" fetchPriority="high" />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/80 via-black/55 to-black/10" />
-        </>
-      ) : (
-        <HeroPattern />
-      )}
+      <HeroPattern />
 
       <div className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center lg:gap-10 lg:p-12">
         <div className="max-w-xl">
@@ -75,7 +104,7 @@ export function HomeHero({ banner, course }: { banner: HeroBanner; course: HeroC
         </div>
 
         {/* Composição lateral só quando cabe ao lado do texto; empilhada, alongaria demais o banner. */}
-        {!image && <div className="hidden lg:block">{course ? <Syllabus course={course} /> : <PlatformPillars />}</div>}
+        <div className="hidden lg:block">{course ? <Syllabus course={course} /> : <PlatformPillars />}</div>
       </div>
     </section>
   );
