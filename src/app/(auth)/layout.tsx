@@ -12,7 +12,8 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
-      <div className="flex flex-col px-5 py-6 sm:px-10">
+      <div className="relative isolate flex flex-col px-5 py-6 sm:px-10">
+        <div aria-hidden className="page-backdrop pointer-events-none absolute inset-0 -z-10" />
         <Logo name={general.platformName} logoUrl={general.logoUrl} />
         <main id="conteudo" className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center py-10">
           {children}

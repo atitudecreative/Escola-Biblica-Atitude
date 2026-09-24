@@ -361,17 +361,13 @@
 @keyframes hero-progress { from { width: 0%; } to { width: 100%; } }
 .hero-progress { animation-name: hero-progress; animation-timing-function: linear; animation-fill-mode: forwards; }
 
-/* Fundo geométrico da Home (preto + verde da marca). */
-.home-backdrop {
-  --bd-ink: #0b0d0c;
-  mask-image: linear-gradient(to bottom, #000 55%, transparent);
+/* Fundo decorativo de todas as páginas (preto + #C7E600), gerado por scripts/gen-backdrop.mjs.
+   Três painéis que se repetem na vertical; em telas estreitas mantém a escala (recorta nas laterais). */
+.page-backdrop {
+  background-image: url("/bg/pattern-light.svg");
+  background-repeat: repeat-y;
+  background-position: top center;
+  background-size: max(100%, 1100px) auto;
 }
-.home-backdrop .bd-ink-fill { opacity: 0.07; }
-.home-backdrop .bd-green-fill { opacity: 0.13; }
-.home-backdrop .bd-green-line { opacity: 0.24; }
-.home-backdrop .bd-ink-line { opacity: 0.14; }
-.dark .home-backdrop { --bd-ink: #000; }
-.dark .home-backdrop .bd-ink-fill { opacity: 0.55; }
-.dark .home-backdrop .bd-green-fill { opacity: 0.24; }
-.dark .home-backdrop .bd-green-line { opacity: 0.32; }
-.dark .home-backdrop .bd-ink-line { opacity: 0.6; }
+.dark .page-backdrop { background-image: url("/bg/pattern-dark.svg"); }
+@media print { .page-backdrop { display: none; } }
