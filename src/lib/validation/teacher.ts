@@ -6,7 +6,7 @@ import { z } from "zod";
  */
 export const COURSE_LEVELS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const;
 export const LESSON_TYPES = ["VIDEO", "TEXT", "PDF", "AUDIO", "PRESENTATION", "FILE", "LINK", "QUIZ", "ASSIGNMENT"] as const;
-export const VIDEO_PROVIDERS = ["URL", "UPLOAD", "YOUTUBE", "VIMEO"] as const;
+export const VIDEO_PROVIDERS = ["URL", "UPLOAD", "YOUTUBE", "VIMEO", "PANDA"] as const;
 export const QUESTION_TYPES = ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER", "ESSAY"] as const;
 export const FEEDBACK_MODES = ["NEVER", "AFTER_SUBMIT", "AFTER_PASS"] as const;
 

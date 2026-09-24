@@ -330,6 +330,7 @@ enum VideoProvider {
   URL
   YOUTUBE
   VIMEO
+  PANDA
 }
 
 model Lesson {

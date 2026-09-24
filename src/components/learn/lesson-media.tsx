@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { completeLessonAction, recordProgressAction } from "@/app/learn/actions";
 import { formatBytes } from "@/lib/format";
+import { embedUrl } from "@/lib/video";
 
 type Next = { id: string; title: string; locked?: boolean } | null;
 
@@ -110,7 +111,7 @@ export function CompleteBar({
 export function VideoLesson({
   lessonId, courseId, title, src, provider, captionsUrl, resumeAt, completed: initial, enrolled, next, certificateEnabled,
 }: {
-  lessonId: string; courseId: string; title: string; src: string; provider: "UPLOAD" | "URL" | "YOUTUBE" | "VIMEO";
+  lessonId: string; courseId: string; title: string; src: string; provider: "UPLOAD" | "URL" | "YOUTUBE" | "VIMEO" | "PANDA";
   captionsUrl: string | null; resumeAt: number; completed: boolean; enrolled: boolean; next: Next; certificateEnabled: boolean;
 }) {
   const router = useRouter();
@@ -139,7 +140,7 @@ export function VideoLesson({
     return () => clearTimeout(t);
   }, [countdown, courseId, next, router]);
 
-  if (provider === "YOUTUBE" || provider === "VIMEO") {
+  if (provider === "YOUTUBE" || provider === "VIMEO" || provider === "PANDA") {
     const embed = embedUrl(provider, src);
     return (
       <div className="space-y-4">
@@ -246,11 +247,3 @@ export function LinkLesson({ url }: { url: string }) {
   );
 }
 
-function embedUrl(provider: "YOUTUBE" | "VIMEO", url: string) {
-  if (provider === "YOUTUBE") {
-    const id = url.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/)?.[1];
-    return id ? `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1` : null;
-  }
-  const id = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)?.[1];
-  return id ? `https://player.vimeo.com/video/${id}` : null;
-}

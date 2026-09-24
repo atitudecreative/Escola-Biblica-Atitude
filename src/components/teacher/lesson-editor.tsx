@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { pandaEmbedUrl } from "@/lib/video";
 import type { LessonType, VideoProvider } from "@prisma/client";
 import { FileText, Link2, Paperclip, Plus, Trash2, X, Captions } from "lucide-react";
 import { Field } from "@/components/ui/field";
@@ -40,6 +41,7 @@ export type LessonValue = {
 const PROVIDERS: { value: VideoProvider; label: string; hint: string }[] = [
   { value: "YOUTUBE", label: "YouTube", hint: "Cole o link do vídeo (público ou não listado)." },
   { value: "VIMEO", label: "Vimeo", hint: "Cole o link do vídeo no Vimeo." },
+  { value: "PANDA", label: "Panda Video", hint: "Cole o link de embed do Panda (…tv.pandavideo.com.br/embed/?v=…) ou o código <iframe> copiado do painel." },
   { value: "URL", label: "Link direto", hint: "Endereço de um arquivo MP4 ou WebM hospedado." },
   { value: "UPLOAD", label: "Enviar arquivo", hint: "MP4 ou WebM enviado para a plataforma." },
 ];
@@ -174,7 +176,21 @@ export function LessonEditor({ initial, mediaFile, hasResponses }: { initial: Le
             </div>
           ) : (
             <Field label="Endereço do vídeo" hint={PROVIDERS.find((p) => p.value === v.videoProvider)?.hint} error={fieldErrors.videoUrl}>
-              <Input type="url" value={v.videoUrl} onChange={(e) => set("videoUrl", e.target.value)} placeholder={v.videoProvider === "VIMEO" ? "https://vimeo.com/…" : v.videoProvider === "YOUTUBE" ? "https://www.youtube.com/watch?v=…" : "https://…/video.mp4"} />
+              <Input
+                type={v.videoProvider === "PANDA" ? "text" : "url"}
+                value={v.videoUrl}
+                // Panda: colar o <iframe> inteiro também funciona — fica só o endereço do player.
+                onChange={(e) => set("videoUrl", v.videoProvider === "PANDA" ? (pandaEmbedUrl(e.target.value) ?? e.target.value) : e.target.value)}
+                placeholder={
+                  v.videoProvider === "VIMEO"
+                    ? "https://vimeo.com/…"
+                    : v.videoProvider === "YOUTUBE"
+                      ? "https://www.youtube.com/watch?v=…"
+                      : v.videoProvider === "PANDA"
+                        ? "https://player-….tv.pandavideo.com.br/embed/?v=…"
+                        : "https://…/video.mp4"
+                }
+              />
             </Field>
           )}
           <div className="flex flex-col gap-1.5">
@@ -187,6 +203,7 @@ export function LessonEditor({ initial, mediaFile, hasResponses }: { initial: Le
             ) : (
               <FileDropzone purpose="lessonMedia" accept=".vtt,text/vtt" compact label="Enviar legendas .vtt" hint="Melhora a acessibilidade da aula." onUploaded={(f) => set("captionsUrl", f.url)} />
             )}
+            {fieldErrors.captionsUrl && <p role="alert" className="text-caption font-medium text-danger">Legendas: {fieldErrors.captionsUrl}</p>}
           </div>
         </section>
       )}
