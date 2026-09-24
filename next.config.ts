@@ -10,7 +10,7 @@ const csp = [
   "media-src 'self' blob: https:",
   "font-src 'self' data:",
   "connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://www.facebook.com",
-  "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com",
+  "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://*.tv.pandavideo.com.br https://*.tv.pandavideo.com",
   "frame-ancestors 'self'",
   "object-src 'none'",
   "base-uri 'self'",

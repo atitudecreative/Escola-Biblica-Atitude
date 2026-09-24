@@ -1,4 +1,5 @@
 import "server-only";
+import { pandaEmbedUrl } from "@/lib/video";
 import type { LessonType, Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import { audit } from "@/server/audit";
@@ -584,6 +585,12 @@ export async function updateLesson(user: SessionUser, input: unknown) {
     if (used) throw new ValidationError(`Esta aula já tem ${used} resposta(s) de alunos. Não é possível trocar o tipo.`, { type: "Tipo bloqueado: já há respostas de alunos." });
   }
   const isVideo = data.type === "VIDEO";
+  // Panda Video: aceita link ou código <iframe>; guarda sempre o embed normalizado.
+  if (isVideo && data.videoProvider === "PANDA") {
+    const panda = pandaEmbedUrl(data.videoUrl);
+    if (!panda) throw new ValidationError("Link do Panda Video inválido.", { videoUrl: "Cole o link de embed do Panda Video (player-….tv.pandavideo.com.br/embed/?v=…) ou o código <iframe>." });
+    data.videoUrl = panda;
+  }
   const updated = await db.lesson.update({
     where: { id: lesson.id },
     data: {

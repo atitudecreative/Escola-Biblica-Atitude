@@ -4,6 +4,7 @@ import { db } from "@/server/db";
 import type { Prisma, CourseLevel } from "@prisma/client";
 import type { SessionUser } from "@/server/auth/session";
 import { canManageCourse } from "./access";
+import { previewEmbedUrl } from "@/lib/video";
 
 const cardSelect = {
   id: true,
@@ -308,15 +309,9 @@ function toShowcase(c: ShowcaseRow, map: Map<string, { progress: number; complet
 function previewSource(l: { title: string; videoProvider: string | null; videoUrl: string | null; mediaFileId: string | null }): LessonPreview | null {
   if (l.videoProvider === "UPLOAD") return l.mediaFileId ? { lessonTitle: l.title, kind: "video", src: `/api/files/${l.mediaFileId}` } : null;
   const url = l.videoUrl ?? "";
-  if (l.videoProvider === "YOUTUBE") {
-    const id = url.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/)?.[1];
-    return id
-      ? { lessonTitle: l.title, kind: "embed", src: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&controls=0&loop=1&playlist=${id}&modestbranding=1&playsinline=1&rel=0` }
-      : null;
-  }
-  if (l.videoProvider === "VIMEO") {
-    const id = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)?.[1];
-    return id ? { lessonTitle: l.title, kind: "embed", src: `https://player.vimeo.com/video/${id}?background=1&autoplay=1&muted=1&loop=1` } : null;
+  if (l.videoProvider === "YOUTUBE" || l.videoProvider === "VIMEO" || l.videoProvider === "PANDA") {
+    const src = previewEmbedUrl(l.videoProvider, url);
+    return src ? { lessonTitle: l.title, kind: "embed", src } : null;
   }
   if (!url.startsWith("/") && !url.startsWith("https://")) return null;
   return { lessonTitle: l.title, kind: "video", src: url, webm: /^\/demo\/.+\.mp4$/.test(url) ? url.replace(/\.mp4$/, ".webm") : undefined };
