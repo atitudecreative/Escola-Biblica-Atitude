@@ -1,4 +1,4 @@
-// QA da Home: expande um card, captura as etapas e verifica foco/Esc/overflow.
+// QA da Home: prévia ao passar o mouse (desktop) e clique no card → página do curso.
 // Uso: CHROME=... node scripts/qa/home.mjs <saida-prefixo> [largura] [perfil|-]
 import { chromium } from "playwright";
 import { contextFor } from "./session.mjs";
@@ -10,19 +10,28 @@ const errors = [];
 p.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 p.on("pageerror", (e) => errors.push(e.message));
 await p.goto(`${base}/`, { waitUntil: "networkidle" });
-const card = p.locator("#destaques a[aria-expanded]").first();
+const card = p.locator("#destaques a[href^='/courses/']").first();
 await card.scrollIntoViewIfNeeded();
 await p.screenshot({ path: `${out}-0.png` });
+const result = { width: +w };
+if (+w >= 1024) {
+  const bb = await card.boundingBox();
+  await p.mouse.move(bb.x + bb.width / 2, bb.y + 60, { steps: 4 });
+  await p.waitForTimeout(1800);
+  await p.screenshot({ path: `${out}-1-preview.png` });
+  result.preview = await p.evaluate(() => {
+    const v = document.querySelector("#destaques video");
+    return v ? { playing: !v.paused, muted: v.muted } : "sem vídeo (capa)";
+  });
+  await p.mouse.move(2, 2);
+  await p.waitForTimeout(300);
+  result.previewClosed = (await p.locator("#destaques video").count()) === 0;
+}
+const href = await card.getAttribute("href");
 await card.click();
-await p.waitForTimeout(180);
-await p.screenshot({ path: `${out}-1-mid.png` });
-await p.waitForTimeout(700);
-await p.screenshot({ path: `${out}-2-open.png` });
-const expanded = await card.getAttribute("aria-expanded").catch(() => "(card substituído)");
-const focused = await p.evaluate(() => document.activeElement?.getAttribute("data-panel-title") !== null ? "título do painel" : document.activeElement?.tagName);
-const overflow = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-await p.keyboard.press("Escape");
-await p.waitForTimeout(500);
-const closed = await p.locator("#featured-panel").count();
-console.log(JSON.stringify({ width: +w, expanded, focused, overflow, panelAfterEsc: closed, errors }, null, 1));
+await p.waitForURL((u) => u.pathname === href, { timeout: 15000 });
+result.navigatedTo = href;
+result.overflow = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+result.errors = errors;
+console.log(JSON.stringify(result, null, 1));
 await browser.close();

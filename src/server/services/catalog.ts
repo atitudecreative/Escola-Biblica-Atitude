@@ -17,6 +17,7 @@ const cardSelect = {
   ratingCount: true,
   enrollmentCount: true,
   publishedAt: true,
+  priceCents: true,
   category: { select: { name: true, slug: true, position: true } },
   instructor: { select: { id: true, name: true } },
 } satisfies Prisma.CourseSelect;
@@ -68,7 +69,32 @@ export async function listCatalog(f: CatalogFilters) {
     db.course.findMany({ where, orderBy, select: cardSelect, take: PAGE_SIZE, skip: (page - 1) * PAGE_SIZE }),
     db.course.count({ where }),
   ]);
-  return { items, total, page };
+  return { items: await withBadges(items), total, page };
+}
+
+// ── Selos dos cards (sempre de dados reais) ───────────────────────
+
+const NEW_DAYS = 45;
+
+/** Os 3 cursos publicados com mais matrículas (com ao menos uma). */
+const popularIds = cache(async () => {
+  const rows = await db.course.findMany({
+    where: { status: "PUBLISHED", enrollmentCount: { gt: 0 } },
+    orderBy: [{ enrollmentCount: "desc" }],
+    select: { id: true },
+    take: 3,
+  });
+  return new Set(rows.map((r) => r.id));
+});
+
+/** "Mais procurado" (top 3 em matrículas) ou "Novo" (publicado há até 45 dias). */
+export async function withBadges<T extends { id: string; publishedAt: Date | null }>(courses: T[]): Promise<(T & { badge: string | null })[]> {
+  const popular = await popularIds();
+  const since = Date.now() - NEW_DAYS * 86_400_000;
+  return courses.map((c) => ({
+    ...c,
+    badge: popular.has(c.id) ? "Mais procurado" : c.publishedAt && c.publishedAt.getTime() >= since ? "Novo" : null,
+  }));
 }
 
 export const catalogFacets = cache(async () => {
@@ -244,6 +270,8 @@ export type ShowcaseCourse = {
   tags: string[];
   /** Prévia tocada ao passar o mouse (só aulas liberadas para quem está vendo). */
   preview: LessonPreview | null;
+  priceCents: number;
+  badge: string | null;
 };
 
 export type LessonPreview = { lessonTitle: string; kind: "video"; src: string; webm?: string } | { lessonTitle: string; kind: "embed"; src: string };
@@ -271,6 +299,8 @@ function toShowcase(c: ShowcaseRow, map: Map<string, { progress: number; complet
     year: c.publishedAt ? c.publishedAt.getFullYear() : null,
     tags: c.tags.map((t) => t.tag.name),
     preview: null,
+    priceCents: c.priceCents,
+    badge: null,
   };
 }
 
@@ -338,6 +368,13 @@ export async function homeShowcase(userId: string | undefined, featuredIds: stri
   const shown = new Set(featured.map((c) => c.id));
   const catalog = [...catalogRows.filter((c) => !shown.has(c.id)), ...catalogRows.filter((c) => shown.has(c.id))].map((c) => toShowcase(c, map));
   await attachPreviews([...featured, ...catalog]);
+  const popular = await popularIds();
+  const since = Date.now() - NEW_DAYS * 86_400_000;
+  const published = new Map([...featuredRows, ...catalogRows].map((r) => [r.id, r.publishedAt]));
+  for (const c of [...featured, ...catalog]) {
+    const at = published.get(c.id);
+    c.badge = popular.has(c.id) ? "Mais procurado" : at && at.getTime() >= since ? "Novo" : null;
+  }
 
   // Curso de cada banner do hero: o que ele divulga (/courses/slug) ou, na falta, o primeiro destaque.
   const fallback = featured[0]?.slug ?? catalog[0]?.slug ?? null;
