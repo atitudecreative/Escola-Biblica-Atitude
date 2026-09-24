@@ -7,7 +7,6 @@ import { catalogFacets, featuredTeachers, homeShowcase } from "@/server/services
 import { continueLearning } from "@/server/services/learning";
 import { HomeHero, type HeroBanner } from "@/components/home/home-hero";
 import { HeroCarousel } from "@/components/home/hero-carousel";
-import { HomeBackdrop } from "@/components/home/home-backdrop";
 import { CourseShowcase } from "@/components/home/course-showcase";
 import { CategoryExplorer } from "@/components/home/category-explorer";
 import { ContinueLearning, HomeSection, HowItWorks, TeachersStrip, Testimonials } from "@/components/home/home-sections";
@@ -64,8 +63,7 @@ export default async function HomePage() {
   const firstName = user?.name.split(" ")[0];
 
   return (
-    <div className="relative isolate">
-      <HomeBackdrop />
+    <div>
       <div className="mx-auto w-full max-w-[1248px] px-4 pt-5 pb-16 sm:px-6 lg:px-8 lg:pt-8">
         {firstName && (
           <p className="mb-4 text-sm text-muted">

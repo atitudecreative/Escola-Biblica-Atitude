@@ -119,7 +119,9 @@ export function AppShell({
         </DrawerContent>
       </Drawer>
 
-      <div className="flex min-h-dvh min-w-0 flex-col transition-[padding] duration-300 ease-[var(--ease-out-soft)] md:pl-(--sb)">
+      <div className="relative isolate flex min-h-dvh min-w-0 flex-col transition-[padding] duration-300 ease-[var(--ease-out-soft)] md:pl-(--sb)">
+        {/* Fundo decorativo (preto + limão), atrás de todo o conteúdo e fora da área da sidebar. */}
+        <div aria-hidden className="page-backdrop pointer-events-none absolute inset-y-0 right-0 left-0 -z-10 transition-[left] duration-300 ease-[var(--ease-out-soft)] md:left-(--sb)" />
         <header className="sticky top-0 z-40 flex h-15 items-center gap-2 border-b border-border bg-bg/85 px-3 backdrop-blur-md sm:px-5 lg:px-8">
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setOpen(true)} aria-label="Abrir menu">
             <Menu />
