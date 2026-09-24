@@ -29,7 +29,7 @@ export function HomeHero({ banner, course }: { banner: HeroBanner; course: HeroC
   // Banner com imagem: a arte já traz o texto — nada é sobreposto. O banner inteiro vira o link
   // do CTA e o título fica disponível para leitores de tela.
   if (image) {
-    const label = banner.ctaLabel ? `${banner.title} — ${banner.ctaLabel}` : banner.title;
+    const label = banner.title;
     const img = (
       // eslint-disable-next-line @next/next/no-img-element -- banner do CMS
       <img

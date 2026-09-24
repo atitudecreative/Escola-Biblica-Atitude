@@ -15,6 +15,19 @@ export type BannerDraft = {
 export function BannerPreview({ b, className }: { b: BannerDraft; className?: string }) {
   const img = !!b.imageUrl;
   const compact = b.placement === "DASHBOARD";
+  // Home com imagem: igual ao site — só a arte, na proporção 3:1, sem texto por cima.
+  if (img && !compact) {
+    return (
+      <div className={cn("overflow-hidden rounded-xl border border-border bg-surface-3", className)}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- pré-visualização do upload */}
+        <img src={b.imageUrl} alt="" className="aspect-[3/1] w-full object-cover" />
+        <p className="flex items-center gap-1.5 border-t border-border px-3 py-2 text-caption text-muted">
+          <ArrowRight className="size-3.5 shrink-0" aria-hidden />
+          <span className="truncate">{b.ctaHref ? `Ao clicar: ${b.ctaHref}` : "Sem link: a imagem não será clicável"}</span>
+        </p>
+      </div>
+    );
+  }
   return (
     <div
       className={cn(

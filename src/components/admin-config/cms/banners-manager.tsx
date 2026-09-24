@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { CalendarClock, ImageIcon, MoreHorizontal, PencilLine, Plus, Trash2, X } from "lucide-react";
+import { Link2, CalendarClock, ImageIcon, MoreHorizontal, PencilLine, Plus, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/checkbox";
@@ -134,6 +134,12 @@ function PlacementList({
                           {b.startsAt ? formatDateTime(b.startsAt) : "agora"} → {b.endsAt ? formatDateTime(b.endsAt) : "sem fim"}
                         </span>
                       )}
+                      {b.ctaHref && (
+                        <span className="inline-flex min-w-0 items-center gap-1 text-caption text-subtle" title={b.ctaHref}>
+                          <Link2 className="size-3.5 shrink-0" aria-hidden />
+                          <span className="max-w-56 truncate">{b.ctaHref}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
                   <Switch
@@ -206,6 +212,7 @@ function BannerDialog({ initial, onClose }: { initial: BannerRow | { placement: 
   const act = useAction(saveBannerAction, { onSuccess: onClose });
   const fe = act.fieldErrors;
   const external = /^https:\/\//.test(b.ctaHref);
+  const imageOnly = b.placement === "HOME_HERO" && !!b.imageUrl;
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -229,51 +236,76 @@ function BannerDialog({ initial, onClose }: { initial: BannerRow | { placement: 
               act.run({ ...b, id: existing?.id, startsAt: fromLocalInput(b.startsAt), endsAt: fromLocalInput(b.endsAt) });
             }}
           >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Onde exibir" error={fe.placement}>
-                <NativeSelect value={b.placement} onChange={(e) => set("placement", e.target.value as BannerDraft["placement"])}>
-                  <option value="HOME_HERO">Banner principal da home</option>
-                  <option value="DASHBOARD">Painel do aluno</option>
-                </NativeSelect>
-              </Field>
-              <Field label="Chamada (eyebrow)" error={fe.eyebrow} hint="Opcional, acima do título.">
-                <Input value={b.eyebrow} maxLength={60} onChange={(e) => set("eyebrow", e.target.value)} placeholder="Ex.: Inscrições abertas" />
-              </Field>
-            </div>
-            <Field label="Título" required error={fe.title}>
-              <Input value={b.title} maxLength={120} onChange={(e) => set("title", e.target.value)} autoFocus={!existing} />
+            <Field label="Onde exibir" error={fe.placement}>
+              <NativeSelect value={b.placement} onChange={(e) => set("placement", e.target.value as BannerDraft["placement"])}>
+                <option value="HOME_HERO">Banner principal da home</option>
+                <option value="DASHBOARD">Painel do aluno</option>
+              </NativeSelect>
             </Field>
-            <Field label="Subtítulo" error={fe.subtitle}>
-              <Textarea value={b.subtitle} maxLength={240} rows={2} onChange={(e) => set("subtitle", e.target.value)} />
-            </Field>
-            <div className="grid gap-4 sm:grid-cols-[0.8fr_1.2fr]">
-              <Field label="Texto do botão" error={fe.ctaLabel}>
-                <Input value={b.ctaLabel} maxLength={40} onChange={(e) => set("ctaLabel", e.target.value)} placeholder="Explorar cursos" />
-              </Field>
-              <Field
-                label="Link do botão"
-                error={fe.ctaHref}
-                hint={b.ctaHref ? (external ? "Link externo: abre em nova aba." : "Link interno da plataforma.") : "Caminho interno (/courses) ou https://"}
-              >
-                <Input value={b.ctaHref} maxLength={300} onChange={(e) => set("ctaHref", e.target.value.trim())} placeholder="/courses" inputMode="url" />
-              </Field>
-            </div>
+
             <div>
-              <p className="mb-1.5 text-small font-medium">Imagem de fundo</p>
+              <p className="mb-1.5 text-small font-medium">Imagem do banner</p>
               {b.imageUrl ? (
                 <div className="flex items-center gap-3 rounded-lg border border-border p-2">
                   {/* eslint-disable-next-line @next/next/no-img-element -- miniatura do upload */}
                   <img src={b.imageUrl} alt="" className="h-12 w-20 rounded object-cover" />
-                  <p className="min-w-0 flex-1 text-small text-muted">Imagem enviada. O texto fica em branco sobre um véu escuro.</p>
+                  <p className="min-w-0 flex-1 text-small text-muted">
+                    {imageOnly ? "A arte aparece inteira, sem texto por cima." : "O texto fica em branco sobre um véu escuro."}
+                  </p>
                   <Button type="button" variant="ghost" size="sm" onClick={() => set("imageUrl", "")}>
                     <X /> Remover
                   </Button>
                 </div>
               ) : (
-                <FileDropzone purpose="banner" accept="image/jpeg,image/png,image/webp" compact hint="JPG, PNG ou WebP até 6 MB · ideal 1920×800" onUploaded={(f) => set("imageUrl", f.url)} />
+                <FileDropzone
+                  purpose="banner"
+                  accept="image/jpeg,image/png,image/webp"
+                  compact
+                  hint={b.placement === "HOME_HERO" ? "JPG, PNG ou WebP até 6 MB · ideal 1200×400 (3:1)" : "JPG, PNG ou WebP até 6 MB · ideal 1920×800"}
+                  onUploaded={(f) => set("imageUrl", f.url)}
+                />
               )}
               {fe.imageUrl && <p className="mt-1 text-caption font-medium text-danger">{fe.imageUrl}</p>}
             </div>
+
+            {imageOnly ? (
+              <>
+                <Field
+                  label="Link ao clicar no banner"
+                  error={fe.ctaHref}
+                  hint={b.ctaHref ? (external ? "Link externo: abre em nova aba." : "Link interno da plataforma.") : "Ex.: /courses/meu-curso ou https://site-do-evento.com.br. Vazio = banner sem link."}
+                >
+                  <Input value={b.ctaHref} maxLength={300} onChange={(e) => set("ctaHref", e.target.value.trim())} placeholder="https://" inputMode="url" />
+                </Field>
+                <Field label="Descrição do banner" required error={fe.title} hint="Não aparece na imagem: identifica o banner na lista e é lida por leitores de tela.">
+                  <Input value={b.title} maxLength={120} onChange={(e) => set("title", e.target.value)} placeholder="Ex.: Rio Power Summit — 08/out, 19h" />
+                </Field>
+              </>
+            ) : (
+              <>
+                <Field label="Chamada (eyebrow)" error={fe.eyebrow} hint="Opcional, acima do título.">
+                  <Input value={b.eyebrow} maxLength={60} onChange={(e) => set("eyebrow", e.target.value)} placeholder="Ex.: Inscrições abertas" />
+                </Field>
+                <Field label="Título" required error={fe.title}>
+                  <Input value={b.title} maxLength={120} onChange={(e) => set("title", e.target.value)} autoFocus={!existing} />
+                </Field>
+                <Field label="Subtítulo" error={fe.subtitle}>
+                  <Textarea value={b.subtitle} maxLength={240} rows={2} onChange={(e) => set("subtitle", e.target.value)} />
+                </Field>
+                <div className="grid gap-4 sm:grid-cols-[0.8fr_1.2fr]">
+                  <Field label="Texto do botão" error={fe.ctaLabel}>
+                    <Input value={b.ctaLabel} maxLength={40} onChange={(e) => set("ctaLabel", e.target.value)} placeholder="Explorar cursos" />
+                  </Field>
+                  <Field
+                    label="Link do botão"
+                    error={fe.ctaHref}
+                    hint={b.ctaHref ? (external ? "Link externo: abre em nova aba." : "Link interno da plataforma.") : "Caminho interno (/courses) ou https://"}
+                  >
+                    <Input value={b.ctaHref} maxLength={300} onChange={(e) => set("ctaHref", e.target.value.trim())} placeholder="/courses" inputMode="url" />
+                  </Field>
+                </div>
+              </>
+            )}
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Exibir a partir de" error={fe.startsAt} hint="Vazio = imediatamente">
                 <Input type="datetime-local" value={b.startsAt} onChange={(e) => set("startsAt", e.target.value)} />

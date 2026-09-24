@@ -63,8 +63,10 @@ export const bannerInput = z
     endsAt: optionalDate,
   })
   .superRefine((b, ctx) => {
+    // Banner da home com imagem: a arte inteira é o link — não há botão, então o rótulo é opcional.
+    const imageOnly = b.placement === "HOME_HERO" && !!b.imageUrl;
     if (b.ctaLabel && !b.ctaHref) ctx.addIssue({ code: "custom", path: ["ctaHref"], message: "Informe o link do botão" });
-    if (b.ctaHref && !b.ctaLabel) ctx.addIssue({ code: "custom", path: ["ctaLabel"], message: "Informe o rótulo do botão" });
+    if (b.ctaHref && !b.ctaLabel && !imageOnly) ctx.addIssue({ code: "custom", path: ["ctaLabel"], message: "Informe o rótulo do botão" });
     if (b.startsAt && b.endsAt && b.endsAt <= b.startsAt)
       ctx.addIssue({ code: "custom", path: ["endsAt"], message: "O fim precisa ser depois do início" });
   });
