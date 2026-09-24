@@ -1,5 +1,5 @@
 // Gera o fundo decorativo das páginas (public/bg/pattern-{light,dark}.svg).
-// Um painel geométrico (1600×1100), exibido uma vez no topo da página: círculos cheios/contorno,
+// Um painel geométrico (1600×1100), exibido uma vez no topo da página, com fade na base: círculos cheios/contorno,
 // arcos concêntricos, ondas, "×" e anel pontilhado.
 // Cores: preto + verde-limão #C7E600. Uso: node scripts/gen-backdrop.mjs
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -58,7 +58,11 @@ mkdirSync("public/bg", { recursive: true });
 for (const [name, t] of Object.entries(THEMES)) {
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMin slice">` +
-    panelGeometric(t, 0) +
+    // fade suave na parte inferior: a arte some no fundo da página
+    `<defs><linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">` +
+    `<stop offset="0.6" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>` +
+    `<mask id="fade-mask" maskContentUnits="userSpaceOnUse"><rect width="${W}" height="${H}" fill="url(#fade)"/></mask></defs>` +
+    `<g mask="url(#fade-mask)">${panelGeometric(t, 0)}</g>` +
     `</svg>`;
   writeFileSync(`public/bg/pattern-${name}.svg`, svg);
   console.log(`public/bg/pattern-${name}.svg`, (svg.length / 1024).toFixed(1), "KB");
