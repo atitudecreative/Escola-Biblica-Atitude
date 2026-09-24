@@ -356,3 +356,7 @@
 @keyframes hero-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .hero-rise { animation: hero-rise 620ms var(--ease-out-soft) both; }
 @media (prefers-reduced-motion: reduce) { .hero-rise { animation: none; } }
+
+/* Barra de progresso do carrossel do hero: o fim da animação avança o slide. */
+@keyframes hero-progress { from { width: 0%; } to { width: 100%; } }
+.hero-progress { animation-name: hero-progress; animation-timing-function: linear; animation-fill-mode: forwards; }
