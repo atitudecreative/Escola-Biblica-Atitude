@@ -5,9 +5,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, Award, CheckCircle2, Download, ExternalLink, FileText, PartyPopper } from "lucide-react";
 import { toast } from "sonner";
 import { VideoPlayer } from "./video-player";
+import { EmbedPlayer } from "./embed-player";
+import { useWatchTracker } from "./use-watch-tracker";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { completeLessonAction, recordProgressAction } from "@/app/learn/actions";
+import { COMPLETE_RATIO } from "@/lib/watch";
 import { formatBytes } from "@/lib/format";
 import { embedUrl } from "@/lib/video";
 
@@ -64,15 +67,51 @@ function useCompletion(lessonId: string, courseId: string, initial: boolean, enr
       </DialogContent>
     </Dialog>
   );
+  /** O servidor concluiu a aula sozinho (vídeo assistido até o fim). */
+  const markDone = useCallback(
+    (courseCompleted: boolean) => {
+      setCompleted(true);
+      if (courseCompleted) setCelebrate(true);
+      else toast.success("Aula concluída — a próxima já está liberada");
+      router.refresh();
+    },
+    [router],
+  );
   void courseId;
-  return { completed, pending, complete, celebration };
+  return { completed, pending, complete, celebration, markDone };
 }
 
 export function CompleteBar({
-  lessonId, courseId, completed: initial, enrolled, next, certificateEnabled, label = "Marcar como concluída",
-}: { lessonId: string; courseId: string; completed: boolean; enrolled: boolean; next: Next; certificateEnabled: boolean; label?: string }) {
+  lessonId, courseId, completed: initial, enrolled, next, certificateEnabled, label = "Marcar como concluída", watched,
+}: {
+  lessonId: string; courseId: string; completed: boolean; enrolled: boolean; next: Next; certificateEnabled: boolean; label?: string;
+  /** Aula de vídeo: fração assistida (validada no servidor). Abaixo de 90%, não dá para concluir. */
+  watched?: number;
+}) {
   const { completed, pending, complete, celebration } = useCompletion(lessonId, courseId, initial, enrolled, certificateEnabled);
   const router = useRouter();
+  const mustWatch = watched !== undefined && enrolled && !completed && watched < COMPLETE_RATIO;
+  if (mustWatch) {
+    const pct = Math.round(watched * 100);
+    return (
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center">
+        <div className="flex-1">
+          <p className="text-sm text-muted">Assista ao vídeo até o fim para concluir a aula e liberar a próxima.</p>
+          <div className="mt-2 flex items-center gap-2.5">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-3" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Quanto do vídeo você assistiu">
+              <div className="h-full rounded-full bg-primary transition-[width] duration-700" style={{ width: `${pct}%` }} />
+            </div>
+            <span className="text-caption font-medium tabular-nums text-muted">{pct}% assistido</span>
+          </div>
+        </div>
+        {next && (
+          <Button disabled variant="outline">
+            Próxima aula <ArrowRight />
+          </Button>
+        )}
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center">
       {completed ? (
@@ -109,26 +148,37 @@ export function CompleteBar({
 }
 
 export function VideoLesson({
-  lessonId, courseId, title, src, provider, captionsUrl, resumeAt, completed: initial, enrolled, next, certificateEnabled,
+  lessonId, courseId, title, src, provider, captionsUrl, resumeAt, completed: initial, enrolled, next, certificateEnabled, watchedSegments, durationSeconds, watermark,
 }: {
   lessonId: string; courseId: string; title: string; src: string; provider: "UPLOAD" | "URL" | "YOUTUBE" | "VIMEO" | "PANDA";
   captionsUrl: string | null; resumeAt: number; completed: boolean; enrolled: boolean; next: Next; certificateEnabled: boolean;
+  watchedSegments: number[]; durationSeconds: number; watermark: string;
 }) {
   const router = useRouter();
-  const { completed, complete, celebration } = useCompletion(lessonId, courseId, initial, enrolled, certificateEnabled);
+  const { completed, celebration, markDone } = useCompletion(lessonId, courseId, initial, enrolled, certificateEnabled);
   const [countdown, setCountdown] = useState<number | null>(null);
-
-  const onProgress = useCallback(
-    (position: number, delta: number) => {
-      if (enrolled) void recordProgressAction({ lessonId, position, delta });
-    },
-    [enrolled, lessonId],
-  );
+  const tracking = enrolled && !completed;
+  const tracker = useWatchTracker({
+    lessonId,
+    enabled: tracking,
+    initialSegments: watchedSegments,
+    fallbackDuration: durationSeconds,
+    measurable: provider !== "PANDA",
+    onServerComplete: markDone,
+  });
+  const doneRef = useRef(completed);
+  useEffect(() => {
+    doneRef.current = completed;
+  }, [completed]);
 
   const onEnded = useCallback(async () => {
-    await complete();
+    await tracker.flush();
+    if (!doneRef.current && enrolled) {
+      toast.info("Ainda faltam partes do vídeo. Assista a elas para concluir a aula.");
+      return;
+    }
     if (next) setCountdown(6);
-  }, [complete, next]);
+  }, [enrolled, next, tracker]);
 
   useEffect(() => {
     if (countdown === null) return;
@@ -140,19 +190,34 @@ export function VideoLesson({
     return () => clearTimeout(t);
   }, [countdown, courseId, next, router]);
 
+  const clampSeek = tracking ? tracker.clampSeek : undefined;
+  const bar = (
+    <CompleteBar lessonId={lessonId} courseId={courseId} completed={completed} enrolled={enrolled} next={next} certificateEnabled={certificateEnabled} watched={tracker.coverage ?? undefined} />
+  );
+  const nextOverlay = countdown !== null && next && (
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 rounded-xl bg-black/80 p-6 text-center text-white animate-fade-in">
+      <p className="text-small text-white/70">Próxima aula em {countdown}s</p>
+      <p className="max-w-md text-h3">{next.title}</p>
+      <div className="flex gap-2">
+        <Button variant="secondary" onClick={() => setCountdown(null)}>Cancelar</Button>
+        <Button onClick={() => router.push(`/learn/${courseId}/${next.id}`)}>Assistir agora <ArrowRight /></Button>
+      </div>
+    </div>
+  );
+
   if (provider === "YOUTUBE" || provider === "VIMEO" || provider === "PANDA") {
     const embed = embedUrl(provider, src);
     return (
       <div className="space-y-4">
-        <div className="aspect-video overflow-hidden rounded-xl bg-black">
+        <div className="relative">
           {embed ? (
-            <iframe src={embed} title={title} className="size-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; fullscreen" allowFullScreen loading="lazy" />
+            <EmbedPlayer provider={provider} src={embed} title={title} onTime={tracker.tick} onEnded={onEnded} clampSeek={clampSeek} watermark={watermark} />
           ) : (
-            <p className="flex size-full items-center justify-center text-sm text-white/80">Link de vídeo inválido.</p>
+            <p className="flex aspect-video items-center justify-center rounded-xl bg-black text-sm text-white/80">Link de vídeo inválido.</p>
           )}
+          {nextOverlay}
         </div>
-        <p className="text-caption text-subtle">Vídeos externos não informam o progresso automaticamente — marque a aula como concluída ao terminar.</p>
-        <CompleteBar lessonId={lessonId} courseId={courseId} completed={completed} enrolled={enrolled} next={next} certificateEnabled={certificateEnabled} />
+        {bar}
         {celebration}
       </div>
     );
@@ -161,21 +226,19 @@ export function VideoLesson({
   return (
     <div>
       <div className="relative">
-      <VideoPlayer sources={[{ src, label: "Original", alternates: /^\/demo\/.+\.mp4$/.test(src) ? [{ src: src.replace(/\.mp4$/, ".webm"), type: "video/webm" }] : undefined }]} captionsUrl={captionsUrl} startAt={completed ? 0 : resumeAt} title={title} onProgress={onProgress} onEnded={onEnded} />
-      {countdown !== null && next && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 rounded-xl bg-black/80 p-6 text-center text-white animate-fade-in">
-          <p className="text-small text-white/70">Próxima aula em {countdown}s</p>
-          <p className="max-w-md text-h3">{next.title}</p>
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => setCountdown(null)}>Cancelar</Button>
-            <Button onClick={() => router.push(`/learn/${courseId}/${next.id}`)}>Assistir agora <ArrowRight /></Button>
-          </div>
-        </div>
-      )}
+        <VideoPlayer
+          sources={[{ src, label: "Original", alternates: /^\/demo\/.+\.mp4$/.test(src) ? [{ src: src.replace(/\.mp4$/, ".webm"), type: "video/webm" }] : undefined }]}
+          captionsUrl={captionsUrl}
+          startAt={completed ? 0 : resumeAt}
+          title={title}
+          onTime={tracker.tick}
+          onEnded={onEnded}
+          clampSeek={clampSeek}
+          watermark={watermark}
+        />
+        {nextOverlay}
       </div>
-      <div className="mt-4">
-        <CompleteBar lessonId={lessonId} courseId={courseId} completed={completed} enrolled={enrolled} next={next} certificateEnabled={certificateEnabled} />
-      </div>
+      <div className="mt-4">{bar}</div>
       {celebration}
     </div>
   );

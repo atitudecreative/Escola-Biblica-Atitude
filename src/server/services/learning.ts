@@ -8,6 +8,7 @@ import { notify } from "./notifications";
 import { awardXp } from "./gamification";
 import { issueCertificate } from "./certificates";
 import { emitWebhook } from "./webhooks";
+import { COMPLETE_RATIO, MAX_PLAYBACK_RATE, SEGMENT_SECONDS, segmentCount, watchCoverage } from "@/lib/watch";
 
 // ── Matrícula ─────────────────────────────────────────────────────
 
@@ -93,6 +94,67 @@ export async function recordProgress(userId: string, lessonId: string, positionS
     update: { positionSeconds: position, watchedSeconds: { increment: delta } },
   });
   await touchStudy(userId, lesson.courseId, lessonId, delta);
+}
+
+/** Duração usada na regra de conclusão: a real informada pelo player (só aumenta), com piso na cadastrada. */
+function effectiveDuration(lessonSeconds: number, mediaSeconds: number | null) {
+  const media = mediaSeconds ?? 0;
+  if (media > 0) return lessonSeconds > 0 ? Math.max(media, Math.round(lessonSeconds * 0.5)) : media;
+  return lessonSeconds;
+}
+
+/**
+ * Registro do player de vídeo (upload ou embed): trechos de 5s efetivamente reproduzidos.
+ * O servidor não confia no cliente: só aceita trechos válidos e, no máximo, o que caberia
+ * no tempo real desde o último registro (a 2x). Ao cobrir 90% do vídeo, a aula é concluída.
+ */
+export async function recordWatch(userId: string, lessonId: string, input: { segments: number[]; position: number; duration: number }) {
+  const lesson = await db.lesson.findUniqueOrThrow({ where: { id: lessonId }, select: { courseId: true, durationSeconds: true } });
+  const prev = await db.lessonProgress.findUnique({ where: { userId_lessonId: { userId, lessonId } } });
+  const now = Date.now();
+
+  const reported = Math.round(input.duration);
+  const mediaSeconds = reported > 0 ? Math.max(prev?.mediaSeconds ?? 0, reported) : (prev?.mediaSeconds ?? null);
+  const duration = effectiveDuration(lesson.durationSeconds, mediaSeconds);
+  const total = duration > 0 ? segmentCount(duration) : 0;
+
+  const have = new Set(prev?.watchedSegments ?? []);
+  const fresh = [...new Set(input.segments)].filter((i) => Number.isInteger(i) && i >= 0 && i < total && !have.has(i)).sort((a, b) => a - b);
+  // Orçamento: tempo real desde o último registro (máx. 2 min, pois o player envia a cada ~10s).
+  const elapsed = prev?.lastBeatAt ? Math.min(120, (now - prev.lastBeatAt.getTime()) / 1000) : 20;
+  const budget = Math.floor((elapsed * MAX_PLAYBACK_RATE + SEGMENT_SECONDS * 2) / SEGMENT_SECONDS);
+  const accepted = fresh.slice(0, Math.max(0, budget));
+  const segments = [...have, ...accepted].sort((a, b) => a - b);
+  const watched = Math.min(accepted.length * SEGMENT_SECONDS, Math.round(elapsed) + SEGMENT_SECONDS);
+  const position = Math.max(0, Math.min(Math.round(input.position), duration || Math.round(input.position)));
+
+  await db.lessonProgress.upsert({
+    where: { userId_lessonId: { userId, lessonId } },
+    create: { userId, lessonId, courseId: lesson.courseId, positionSeconds: position, watchedSeconds: watched, watchedSegments: segments, mediaSeconds, lastBeatAt: new Date(now) },
+    update: { positionSeconds: position, watchedSeconds: { increment: watched }, watchedSegments: segments, mediaSeconds, lastBeatAt: new Date(now) },
+  });
+  if (watched > 0) await touchStudy(userId, lesson.courseId, lessonId, watched);
+
+  const coverage = duration > 0 ? watchCoverage(segments, duration) : null;
+  let completed = prev?.status === "COMPLETED";
+  let courseCompleted = false;
+  if (!completed && coverage !== null && coverage >= COMPLETE_RATIO) {
+    const res = await completeLesson(userId, lessonId);
+    completed = true;
+    courseCompleted = res.courseCompleted;
+  }
+  return { coverage, segments, completed, courseCompleted };
+}
+
+/** A aula de vídeo foi assistida o suficiente para ser concluída? */
+export async function videoWatchedEnough(userId: string, lesson: { id: string; durationSeconds: number; videoProvider: string | null }) {
+  const p = await db.lessonProgress.findUnique({ where: { userId_lessonId: { userId, lessonId: lesson.id } }, select: { watchedSegments: true, mediaSeconds: true, status: true } });
+  if (p?.status === "COMPLETED") return true;
+  const duration = effectiveDuration(lesson.durationSeconds, p?.mediaSeconds ?? null);
+  // Sem duração conhecida: player próprio/YouTube/Vimeo sempre informam ao tocar (então ainda não assistiu);
+  // só o Panda sem duração cadastrada fica sem como medir.
+  if (duration <= 0) return lesson.videoProvider === "PANDA";
+  return watchCoverage(p?.watchedSegments ?? [], duration) >= COMPLETE_RATIO;
 }
 
 async function touchStudy(userId: string, courseId: string, lessonId: string, seconds: number, lessons = 0) {

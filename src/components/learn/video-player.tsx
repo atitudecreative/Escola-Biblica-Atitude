@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Captions, CaptionsOff, Check, Maximize, Minimize, Pause, PictureInPicture2, Play, RotateCcw, RotateCw, Settings, Volume1, Volume2, VolumeX,
 } from "lucide-react";
+import { Watermark } from "./watermark";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
 import { formatClock } from "@/lib/format";
@@ -30,7 +31,9 @@ function savePrefs(p: Partial<ReturnType<typeof loadPrefs>>) {
 /**
  * Player HTML5 com controles próprios e acessíveis.
  * Atalhos: Espaço/K play · J/L ±10s · ←/→ ±5s · ↑/↓ volume · M mudo · F tela cheia · C legendas.
- * Emite onProgress(posição, delta assistido) a cada ~15s e onEnded ao terminar.
+ * Emite onProgress(posição, delta assistido) a cada ~15s, onTime a cada atualização e onEnded ao terminar.
+ * `clampSeek` limita o avanço na barra (aula ainda não assistida); `watermark` identifica o aluno na tela.
+ * Sem menu de contexto nem botão de download: o arquivo vem de um endereço pessoal e temporário.
  */
 export function VideoPlayer({
   sources,
@@ -38,14 +41,20 @@ export function VideoPlayer({
   startAt = 0,
   title,
   onProgress,
+  onTime,
   onEnded,
+  clampSeek,
+  watermark,
 }: {
   sources: VideoSource[];
   captionsUrl?: string | null;
   startAt?: number;
   title: string;
   onProgress?: (position: number, delta: number) => void;
+  onTime?: (position: number, playing: boolean, duration: number) => void;
   onEnded?: () => void;
+  clampSeek?: (to: number) => number;
+  watermark?: string;
 }) {
   const wrap = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
@@ -133,16 +142,22 @@ export function VideoPlayer({
     else v.pause();
   }, []);
 
+  const showFlash = useCallback((s: string, ms = 500) => {
+    setFlash(s);
+    setTimeout(() => setFlash(null), ms);
+  }, []);
+
   const seek = useCallback((to: number) => {
     const v = video.current;
     if (!v || !Number.isFinite(v.duration)) return;
-    v.currentTime = Math.max(0, Math.min(v.duration, to));
-  }, []);
-
-  const showFlash = (s: string) => {
-    setFlash(s);
-    setTimeout(() => setFlash(null), 500);
-  };
+    let target = Math.max(0, Math.min(v.duration, to));
+    if (clampSeek && target > v.currentTime) {
+      const allowed = Math.max(v.currentTime, clampSeek(target));
+      if (allowed < target - 0.5) showFlash("Assista para avançar", 1400);
+      target = allowed;
+    }
+    v.currentTime = target;
+  }, [clampSeek, showFlash]);
 
   const setVol = (val: number) => {
     const v = video.current;
@@ -236,6 +251,7 @@ export function VideoPlayer({
       onMouseLeave={() => playing && setIdle(true)}
       role="region"
       aria-label={`Player de vídeo: ${title}`}
+      onContextMenu={(e) => e.preventDefault()}
       className={cn("group relative aspect-video w-full overflow-hidden bg-black text-white select-none focus-visible:outline-2", controlsHidden && "cursor-none", fullscreen ? "rounded-none" : "rounded-xl")}
     >
       <video
@@ -245,6 +261,9 @@ export function VideoPlayer({
         playsInline
         preload="metadata"
         crossOrigin="anonymous"
+        controlsList="nodownload noremoteplayback"
+        disableRemotePlayback
+        onContextMenu={(e) => e.preventDefault()}
         onClick={toggle}
         onDoubleClick={toggleFullscreen}
         onLoadedMetadata={(e) => {
@@ -264,6 +283,7 @@ export function VideoPlayer({
             if (d > 0 && d < 2) watched.current += d / v.playbackRate;
           }
           lastTick.current = now;
+          onTime?.(now, !v.paused && !v.seeking, v.duration);
           if (v.buffered.length) setBuffered(v.buffered.end(v.buffered.length - 1));
         }}
         onPlay={() => {
@@ -274,6 +294,13 @@ export function VideoPlayer({
           setPlaying(false);
           setIdle(false);
           flush();
+        }}
+        onSeeking={(e) => {
+          // Qualquer outra forma de pular (teclas de mídia, devtools) também respeita o limite.
+          const v = e.currentTarget;
+          if (!clampSeek) return;
+          const allowed = clampSeek(v.currentTime);
+          if (allowed < v.currentTime - 1) v.currentTime = allowed;
         }}
         onWaiting={() => setWaiting(true)}
         onPlaying={() => setWaiting(false)}
@@ -288,10 +315,12 @@ export function VideoPlayer({
         }}
         onError={() => setError(true)}
       >
-        <source src={sources[source]?.src} type={sources[source]?.type ?? "video/mp4"} />
+        <source src={sources[source]?.src} type={sources[source]?.type} />
         {sources[source]?.alternates?.map((a) => <source key={a.src} src={a.src} type={a.type} />)}
         {captionsUrl && <track kind="subtitles" src={captionsUrl} srcLang="pt-BR" label="Português" default={false} />}
       </video>
+
+      {watermark && <Watermark text={watermark} />}
 
       {error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/85 p-6 text-center">

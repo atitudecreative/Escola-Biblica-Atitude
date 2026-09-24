@@ -8,13 +8,14 @@ import { canManageCourse } from "./access";
  * são livres. PRIVATE exigem vínculo: dono; material/aula de curso em que está
  * matriculado ou que gerencia; entrega própria ou de curso que corrige;
  * anexo de conversa da qual participa; ou permissão administrativa.
+ * Vídeo de aula (não prévia) só para quem gerencia — alunos recebem via /api/stream.
  */
 export async function canReadFile(user: SessionUser | null, fileId: string) {
   const file = await db.fileAsset.findUnique({
     where: { id: fileId },
     include: {
       materials: { select: { courseId: true, course: { select: { instructorId: true } } } },
-      lessons: { select: { courseId: true, isPreview: true, course: { select: { instructorId: true, status: true } } } },
+      lessons: { select: { courseId: true, isPreview: true, type: true, mediaFileId: true, course: { select: { instructorId: true, status: true } } } },
       submissions: { select: { userId: true, assignment: { select: { course: { select: { instructorId: true } } } } } },
       messages: { select: { conversationId: true } },
     },
@@ -30,6 +31,9 @@ export async function canReadFile(user: SessionUser | null, fileId: string) {
     if (canManageCourse(user, l.course)) return { file, allowed: true };
     if (l.isPreview && l.course.status === "PUBLISHED") return { file, allowed: true };
   }
+  // Vídeo de aula fechada nunca sai por aqui (daria para abrir/baixar pelo endereço):
+  // o aluno assiste só pelo player, via /api/stream com token pessoal e temporário.
+  if (file.lessons.some((l) => l.type === "VIDEO" && l.mediaFileId === file.id) && !file.materials.length) return { file, allowed: false };
   if (courseIds.length) {
     const enrolled = await db.enrollment.count({ where: { userId: user.id, courseId: { in: courseIds }, status: { not: "CANCELLED" } } });
     if (enrolled) return { file, allowed: true };
