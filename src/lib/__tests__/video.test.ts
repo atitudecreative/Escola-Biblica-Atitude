@@ -28,6 +28,7 @@ describe("embeds", () => {
   it("player e prévia do Panda", () => {
     expect(embedUrl("PANDA", EMBED)).toBe(EMBED);
     expect(previewEmbedUrl("PANDA", EMBED)).toContain("muted=true");
+    expect(previewEmbedUrl("PANDA", EMBED)).toContain("smartAutoplay=false&mutedIndicatorIcon=false");
   });
   it("YouTube e Vimeo continuam iguais", () => {
     expect(embedUrl("YOUTUBE", "https://www.youtube.com/watch?v=dQw4w9WgXcQ")).toBe("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1");
