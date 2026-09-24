@@ -1,5 +1,5 @@
 // Gera o fundo decorativo das páginas (public/bg/pattern-{light,dark}.svg).
-// Um painel geométrico (1600×1100) que se repete na vertical: círculos cheios/contorno,
+// Um painel geométrico (1600×1100), exibido uma vez no topo da página: círculos cheios/contorno,
 // arcos concêntricos, ondas, "×" e anel pontilhado.
 // Cores: preto + verde-limão #C7E600. Uso: node scripts/gen-backdrop.mjs
 import { mkdirSync, writeFileSync } from "node:fs";
