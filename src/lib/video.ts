@@ -56,5 +56,6 @@ export function previewEmbedUrl(provider: EmbedProvider, url: string): string | 
     return id ? `https://player.vimeo.com/video/${id}?background=1&autoplay=1&muted=1&loop=1` : null;
   }
   const base = pandaEmbedUrl(url);
-  return base ? `${base}&autoplay=true&muted=true&loop=true&controls=false` : null;
+  // Sem o "Ativar som" do Panda (smartAutoplay/mutedIndicator) sobre a prévia.
+  return base ? `${base}&autoplay=true&muted=true&loop=true&controls=false&smartAutoplay=false&mutedIndicatorIcon=false` : null;
 }
