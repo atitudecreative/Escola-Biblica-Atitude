@@ -21,7 +21,7 @@ import { deleteBannerAction, reorderBannersAction, saveBannerAction, toggleBanne
 export type BannerRow = BannerDraft & { id: string; isActive: boolean; startsAt: string | null; endsAt: string | null };
 
 const PLACEMENTS = {
-  HOME_HERO: { label: "Slider da home", hint: "Carrossel no topo do site público." },
+  HOME_HERO: { label: "Banner principal da home", hint: "A home exibe só o primeiro banner ativo, dentro do período de exibição." },
   DASHBOARD: { label: "Painel do aluno", hint: "Aviso em destaque no início da área logada." },
 } as const;
 
@@ -232,7 +232,7 @@ function BannerDialog({ initial, onClose }: { initial: BannerRow | { placement: 
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Onde exibir" error={fe.placement}>
                 <NativeSelect value={b.placement} onChange={(e) => set("placement", e.target.value as BannerDraft["placement"])}>
-                  <option value="HOME_HERO">Slider da home</option>
+                  <option value="HOME_HERO">Banner principal da home</option>
                   <option value="DASHBOARD">Painel do aluno</option>
                 </NativeSelect>
               </Field>

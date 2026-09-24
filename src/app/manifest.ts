@@ -11,7 +11,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     name: general.platformName,
     short_name: general.shortName,
     description: general.description,
-    start_url: "/dashboard",
+    start_url: "/",
     scope: "/",
     display: "standalone",
     background_color: "#f7f6f2",

@@ -1,5 +1,8 @@
 import type { Permission, RoleKey } from "@/lib/permissions";
 
+/** Cookie com o estado da sidebar (lido no servidor para não piscar ao carregar). */
+export const SIDEBAR_COOKIE = "eba_sidebar";
+
 /**
  * Navegação do app. Cada seção/item declara as permissões necessárias
  * (qualquer uma delas basta). A sidebar é montada no servidor filtrando
@@ -17,11 +20,12 @@ export type NavItem = {
 export type NavSection = { title?: string; perms?: Permission[]; roles?: RoleKey[]; items: NavItem[] };
 
 export const NAV: NavSection[] = [
-  { items: [{ label: "Início", href: "/dashboard", icon: "home", exact: true }] },
+  { items: [{ label: "Início", href: "/", icon: "home", exact: true }] },
   {
     title: "Aprendizado",
     perms: ["learning.access"],
     items: [
+      { label: "Painel de estudos", href: "/dashboard", icon: "gauge", exact: true },
       { label: "Meus cursos", href: "/my-courses", icon: "book" },
       { label: "Catálogo", href: "/courses", icon: "compass" },
       { label: "Atividades", href: "/assignments", icon: "clipboard" },
@@ -84,6 +88,23 @@ export const NAV: NavSection[] = [
       { label: "Logs", href: "/admin/logs", icon: "scroll", perms: ["audit.view"] },
     ],
   },
+];
+
+/** Visitante sem conta: só o que é público. */
+export const PUBLIC_NAV: NavSection[] = [
+  {
+    items: [
+      { label: "Início", href: "/", icon: "home", exact: true },
+      { label: "Catálogo", href: "/courses", icon: "compass" },
+      { label: "Validar certificado", href: "/certificate", icon: "badge-check" },
+    ],
+  },
+];
+
+/** Rodapé da sidebar para quem está logado. */
+export const ACCOUNT_NAV: NavItem[] = [
+  { label: "Perfil", href: "/profile", icon: "user", exact: true },
+  { label: "Configurações", href: "/profile/settings", icon: "settings" },
 ];
 
 export function filterNav(perms: Set<string>, roles: RoleKey[]): NavSection[] {

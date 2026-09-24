@@ -23,6 +23,7 @@ export function CourseCover({
   className,
   size = "md",
   tone,
+  showTitle = true,
 }: {
   title: string;
   category?: string | null;
@@ -31,6 +32,8 @@ export function CourseCover({
   src?: string | null;
   className?: string;
   size?: "sm" | "md" | "lg";
+  /** Miniaturas muito pequenas: só a arte, sem o título (que fica ilegível). */
+  showTitle?: boolean;
 }) {
   if (src) {
     return (
@@ -65,7 +68,7 @@ export function CourseCover({
         )}
         <rect x={0} y={0} width={4} height={180} fill={p.accent} fillOpacity={0.9} />
       </svg>
-      <div className="absolute inset-0 flex flex-col justify-end p-[7%]">
+      {showTitle && <div className="absolute inset-0 flex flex-col justify-end p-[7%]">
         {category && size !== "sm" && (
           <span className="mb-[2.5cqw] text-[clamp(0.55rem,2.6cqw,0.75rem)] font-semibold tracking-[0.14em] uppercase" style={{ color: p.accent }}>
             {category}
@@ -74,7 +77,7 @@ export function CourseCover({
         <span className="line-clamp-3 max-w-[88%] font-display leading-[1.08] tracking-tight text-balance" style={{ fontSize: titleSize }}>
           {words.length > 9 ? words.slice(0, 9).join(" ") + "…" : title}
         </span>
-      </div>
+      </div>}
     </div>
   );
 }

@@ -25,16 +25,16 @@ export type HomeSettings = {
 };
 export type PickerCourse = { id: string; title: string; coverUrl: string | null; teacher: string; category: string | null };
 
+// Ordem em que as seções aparecem na Home. "popular"/"newest" seguem no schema por compatibilidade,
+// mas a Home agora tem um único explorador por área (ordenado por procura).
 const SECTION_LABELS: { key: keyof Sections; label: string; hint: string }[] = [
-  { key: "featured", label: "Cursos em destaque", hint: "Seleção manual abaixo" },
-  { key: "categories", label: "Categorias", hint: "Atalhos para o catálogo" },
-  { key: "continue", label: "Continue aprendendo", hint: "Só para quem está logado" },
-  { key: "popular", label: "Mais procurados", hint: "Por número de matrículas" },
-  { key: "newest", label: "Novidades", hint: "Publicados recentemente" },
+  { key: "continue", label: "Continue de onde parou", hint: "Só para quem está logado e já estuda" },
+  { key: "featured", label: "Comece por aqui", hint: "Até 3 cursos da seleção abaixo" },
+  { key: "categories", label: "Explore por área", hint: "Catálogo filtrável por categoria" },
+  { key: "benefits", label: "Benefícios", hint: "Aparecem em “Como funciona”, para quem ainda não estuda" },
   { key: "teachers", label: "Professores", hint: "Quem ensina na Escola" },
-  { key: "testimonials", label: "Depoimentos", hint: "Editados abaixo" },
-  { key: "benefits", label: "Benefícios", hint: "Editados abaixo" },
-  { key: "cta", label: "Chamada final", hint: "Convite para criar conta" },
+  { key: "testimonials", label: "Depoimentos", hint: "Até 3, editados abaixo" },
+  { key: "cta", label: "Chamada final", hint: "Convite para criar conta (só visitantes)" },
 ];
 
 let uid = 0;

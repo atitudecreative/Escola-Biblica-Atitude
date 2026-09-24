@@ -197,3 +197,120 @@ export async function getCoursePage(slug: string, user: SessionUser | null) {
     lessonCount: course.modules.reduce((s, m) => s + m.lessons.length, 0),
   };
 }
+
+// ── Home ──────────────────────────────────────────────────────────
+
+const showcaseSelect = {
+  ...cardSelect,
+  description: true,
+  priceCents: true,
+  category: { select: { name: true, slug: true, position: true } },
+  instructor: { select: { id: true, name: true, avatarUrl: true } },
+  _count: { select: { lessons: { where: { isPublished: true } } } },
+} satisfies Prisma.CourseSelect;
+
+type ShowcaseRow = Prisma.CourseGetPayload<{ select: typeof showcaseSelect }>;
+
+/** Texto curto para o card expandido: subtítulo ou o início da descrição, sem Markdown. */
+function excerpt(c: Pick<ShowcaseRow, "subtitle" | "description">, max = 240) {
+  const plain = (c.description ?? "")
+    .replace(/[#>*_`~[\]()!-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const base = plain || c.subtitle || "";
+  return base.length > max ? `${base.slice(0, max).replace(/\s+\S*$/, "")}…` : base;
+}
+
+export type ShowcaseCourse = {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string | null;
+  excerpt: string;
+  coverUrl: string | null;
+  level: CourseLevel;
+  durationMinutes: number;
+  lessonCount: number;
+  ratingAvg: number;
+  ratingCount: number;
+  enrollmentCount: number;
+  paid: boolean;
+  category: { name: string; slug: string; position: number } | null;
+  instructor: { id: string; name: string; avatarUrl: string | null };
+  enrollment: "none" | "active" | "completed";
+  progress: number | null;
+};
+
+function toShowcase(c: ShowcaseRow, map: Map<string, { progress: number; completed: boolean }>): ShowcaseCourse {
+  const e = map.get(c.id);
+  return {
+    id: c.id,
+    slug: c.slug,
+    title: c.title,
+    subtitle: c.subtitle,
+    excerpt: excerpt(c),
+    coverUrl: c.coverUrl,
+    level: c.level,
+    durationMinutes: c.durationMinutes,
+    lessonCount: c._count.lessons,
+    ratingAvg: c.ratingAvg,
+    ratingCount: c.ratingCount,
+    enrollmentCount: c.enrollmentCount,
+    paid: c.priceCents > 0,
+    category: c.category,
+    instructor: c.instructor,
+    enrollment: e ? (e.completed ? "completed" : "active") : "none",
+    progress: e?.progress ?? null,
+  };
+}
+
+/**
+ * Dados da Home: destaques (ordem do CMS), catálogo para "Explore por área"
+ * e o curso do banner principal com o sumário (módulos) para o hero.
+ */
+export async function homeShowcase(userId: string | undefined, featuredIds: string[], bannerHref: string | null) {
+  const [featuredRows, catalogRows] = await Promise.all([
+    featuredIds.length
+      ? db.course.findMany({ where: { id: { in: featuredIds }, status: "PUBLISHED" }, select: showcaseSelect })
+      : db.course.findMany({ where: { status: "PUBLISHED", isFeatured: true }, orderBy: [{ enrollmentCount: "desc" }], select: showcaseSelect, take: 6 }),
+    db.course.findMany({ where: { status: "PUBLISHED" }, orderBy: [{ enrollmentCount: "desc" }, { ratingAvg: "desc" }], select: showcaseSelect, take: 60 }),
+  ]);
+  const order = new Map(featuredIds.map((id, i) => [id, i]));
+  featuredRows.sort((a, b) => (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99));
+
+  const map = await enrollmentMap(userId, [...new Set([...featuredRows, ...catalogRows].map((c) => c.id))]);
+  // Três destaques: uma linha limpa no desktop, sem card órfão.
+  const featured = featuredRows.slice(0, 3).map((c) => toShowcase(c, map));
+  // No explorador, o que ainda não apareceu nos destaques vem primeiro (ordem estável).
+  const shown = new Set(featured.map((c) => c.id));
+  const catalog = [...catalogRows.filter((c) => !shown.has(c.id)), ...catalogRows.filter((c) => shown.has(c.id))].map((c) => toShowcase(c, map));
+
+  // Curso do hero: o que o banner divulga (/courses/slug) ou o primeiro destaque.
+  const slugFromBanner = bannerHref?.match(/^\/courses\/([^/?#]+)/)?.[1];
+  const heroSlug = slugFromBanner ?? featured[0]?.slug ?? catalog[0]?.slug;
+  const hero = heroSlug
+    ? await db.course.findFirst({
+        where: { slug: heroSlug, status: "PUBLISHED" },
+        select: {
+          ...showcaseSelect,
+          modules: {
+            orderBy: { position: "asc" },
+            select: { id: true, title: true, _count: { select: { lessons: { where: { isPublished: true } } } } },
+          },
+        },
+      })
+    : null;
+
+  return {
+    featured,
+    catalog,
+    hero: hero
+      ? {
+          ...toShowcase(hero, map),
+          modules: hero.modules.filter((m) => m._count.lessons > 0).map((m) => ({ id: m.id, title: m.title, lessons: m._count.lessons })),
+        }
+      : null,
+  };
+}
+
+export type HeroCourse = NonNullable<Awaited<ReturnType<typeof homeShowcase>>["hero"]>;

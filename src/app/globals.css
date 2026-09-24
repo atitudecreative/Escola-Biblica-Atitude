@@ -32,6 +32,8 @@
   --primary-fg: #ffffff;
   --primary-soft: color-mix(in oklab, var(--brand) 9%, white);
   --primary-soft-fg: color-mix(in oklab, var(--brand) 88%, black);
+  /* Superfície de destaque (hero): sempre profunda, texto claro nos dois temas. */
+  --hero: var(--brand);
 
   --accent: var(--brand-accent);
   --accent-soft: color-mix(in oklab, var(--brand-accent) 13%, white);
@@ -83,6 +85,7 @@
   --primary-fg: #0d0e0d;
   --primary-soft: color-mix(in oklab, var(--brand) 22%, #141615);
   --primary-soft-fg: color-mix(in oklab, var(--brand) 45%, white);
+  --hero: color-mix(in oklab, var(--brand) 72%, #0b0d0c);
 
   --accent: color-mix(in oklab, var(--brand-accent) 80%, white);
   --accent-soft: color-mix(in oklab, var(--brand-accent) 18%, #141615);
@@ -131,6 +134,7 @@
   --color-primary-fg: var(--primary-fg);
   --color-primary-soft: var(--primary-soft);
   --color-primary-soft-fg: var(--primary-soft-fg);
+  --color-hero: var(--hero);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-accent-soft-fg: var(--accent-soft-fg);
@@ -319,3 +323,36 @@
   & th, & td { border: 1px solid var(--border); padding: 0.5em 0.75em; text-align: left; }
   & strong { font-weight: 620; }
 }
+
+/* ── Shell: sidebar expandida (248px) ↔ trilho (72px) ─────────────────────
+   --sb é a largura atual; a sidebar e o conteúdo animam juntos.
+   .sb-label some no trilho; .sb-rail só aparece no trilho. */
+.app-shell { --sb: 0px; }
+.sb-label, .sb-rail { transition: opacity 160ms var(--ease-out-soft), transform 220ms var(--ease-out-soft); }
+.sb-rail { opacity: 0; pointer-events: none; }
+.sb-only-rail { display: none; }
+@media (min-width: 768px) {
+  .app-shell { --sb: 72px; }
+}
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .app-shell .sb-label { opacity: 0; transform: translateX(-4px); pointer-events: none; }
+  .app-shell .sb-rail { opacity: 1; pointer-events: auto; }
+  .app-shell .sb-only-full { display: none; }
+  .app-shell .sb-only-rail { display: flex; }
+}
+@media (min-width: 1024px) {
+  .app-shell { --sb: 248px; }
+  .app-shell[data-collapsed="true"] { --sb: 72px; }
+  .app-shell[data-collapsed="true"] .sb-label { opacity: 0; transform: translateX(-4px); pointer-events: none; }
+  .app-shell[data-collapsed="true"] .sb-rail { opacity: 1; pointer-events: auto; }
+  .app-shell[data-collapsed="true"] .sb-only-full { display: none; }
+  .app-shell[data-collapsed="true"] .sb-only-rail { display: flex; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell *, .app-shell *::before { transition-duration: 1ms !important; }
+}
+
+/* Entrada do hero: sobe 10px e aparece, em cascata via animation-delay. */
+@keyframes hero-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.hero-rise { animation: hero-rise 620ms var(--ease-out-soft) both; }
+@media (prefers-reduced-motion: reduce) { .hero-rise { animation: none; } }
