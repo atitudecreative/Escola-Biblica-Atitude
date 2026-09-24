@@ -31,7 +31,7 @@ export default async function BannersPage(props: PageProps<"/admin/banners">) {
       <PageHeader
         eyebrow="Administração"
         title="Banners e home"
-        description="Conteúdo visual do site: slider da home, avisos do painel do aluno, seções da página inicial e rodapé."
+        description="Conteúdo visual do site: banner principal da home, avisos do painel do aluno, seções da página inicial e rodapé."
         actions={
           <Button variant="outline" asChild>
             <Link href="/" target="_blank">

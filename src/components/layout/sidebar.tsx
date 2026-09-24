@@ -6,7 +6,7 @@ import {
   HelpCircle, Home, Image, Layers, Megaphone, MessageSquare, PanelLeftClose, PanelLeftOpen, Presentation, ScrollText,
   Settings, Shield, Tags, User, Users, type LucideIcon,
 } from "lucide-react";
-import { LogoMark } from "@/components/brand";
+import { LogoFull, LogoMark } from "@/components/brand";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { NavItem, NavSection } from "./nav-config";
@@ -152,12 +152,18 @@ export function Sidebar({
       <div className="flex h-15 shrink-0 items-center px-5">
         <Link href="/" aria-label={`${brand.name} — início`} className="flex min-w-0 items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">
           {brand.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- logo configurável pelo CMS
-            <img src={brand.logoUrl} alt="" className="h-8 w-auto max-w-8 shrink-0 object-contain" />
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element -- logo configurável pelo CMS */}
+              <img src={brand.logoUrl} alt="" className="h-8 w-auto max-w-8 shrink-0 object-contain" />
+              <span className="sb-label truncate text-[0.9375rem] leading-tight font-semibold tracking-tight text-fg">{brand.name}</span>
+            </>
           ) : (
-            <LogoMark className="shrink-0" />
+            // Expandida: logo completo; trilho: só o capelo, no mesmo ponto (troca com fade).
+            <span className="relative flex h-11 items-center">
+              <LogoFull className="sb-label" />
+              <LogoMark className="sb-rail absolute top-2 left-0" />
+            </span>
           )}
-          <span className="sb-label truncate text-[0.9375rem] leading-tight font-semibold tracking-tight text-fg">{brand.name}</span>
         </Link>
       </div>
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:thin]">
