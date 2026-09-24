@@ -360,3 +360,18 @@
 /* Barra de progresso do carrossel do hero: o fim da animação avança o slide. */
 @keyframes hero-progress { from { width: 0%; } to { width: 100%; } }
 .hero-progress { animation-name: hero-progress; animation-timing-function: linear; animation-fill-mode: forwards; }
+
+/* Fundo geométrico da Home (preto + verde da marca). */
+.home-backdrop {
+  --bd-ink: #0b0d0c;
+  mask-image: linear-gradient(to bottom, #000 55%, transparent);
+}
+.home-backdrop .bd-ink-fill { opacity: 0.07; }
+.home-backdrop .bd-green-fill { opacity: 0.13; }
+.home-backdrop .bd-green-line { opacity: 0.24; }
+.home-backdrop .bd-ink-line { opacity: 0.14; }
+.dark .home-backdrop { --bd-ink: #000; }
+.dark .home-backdrop .bd-ink-fill { opacity: 0.55; }
+.dark .home-backdrop .bd-green-fill { opacity: 0.24; }
+.dark .home-backdrop .bd-green-line { opacity: 0.32; }
+.dark .home-backdrop .bd-ink-line { opacity: 0.6; }

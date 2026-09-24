@@ -7,6 +7,7 @@ import { catalogFacets, featuredTeachers, homeShowcase } from "@/server/services
 import { continueLearning } from "@/server/services/learning";
 import { HomeHero, type HeroBanner } from "@/components/home/home-hero";
 import { HeroCarousel } from "@/components/home/hero-carousel";
+import { HomeBackdrop } from "@/components/home/home-backdrop";
 import { CourseShowcase } from "@/components/home/course-showcase";
 import { CategoryExplorer } from "@/components/home/category-explorer";
 import { ContinueLearning, HomeSection, HowItWorks, TeachersStrip, Testimonials } from "@/components/home/home-sections";
@@ -63,113 +64,116 @@ export default async function HomePage() {
   const firstName = user?.name.split(" ")[0];
 
   return (
-    <div className="mx-auto w-full max-w-[1248px] px-4 pt-5 pb-16 sm:px-6 lg:px-8 lg:pt-8">
-      {firstName && (
-        <p className="mb-4 text-sm text-muted">
-          Olá, <span className="font-medium text-fg">{firstName}</span>. {continuing.length > 0 ? "Que bom te ver de volta." : "Que tal começar um curso hoje?"}
-        </p>
-      )}
-
-      {slides.length > 1 ? (
-        <HeroCarousel
-          title={general.platformName}
-          labels={slides.map((b) => b.title)}
-          slides={slides.map((b, i) => (
-            <HomeHero key={i} banner={b} course={showcase.heroes[i] ?? null} heading="h2" headingId={`hero-title-${i}`} />
-          ))}
-        />
-      ) : (
-        <HomeHero banner={slides[0]} course={showcase.heroes[0] ?? null} />
-      )}
-
-      <div className="mt-14 space-y-16 lg:mt-16 lg:space-y-20">
-        {continuing.length > 0 && (
-          <HomeSection id="continuar" eyebrow="Seu aprendizado" title="Continue de onde parou" action={{ href: "/my-courses", label: "Meus cursos" }}>
-            <ContinueLearning items={continuing} />
-          </HomeSection>
+    <div className="relative isolate">
+      <HomeBackdrop />
+      <div className="mx-auto w-full max-w-[1248px] px-4 pt-5 pb-16 sm:px-6 lg:px-8 lg:pt-8">
+        {firstName && (
+          <p className="mb-4 text-sm text-muted">
+            Olá, <span className="font-medium text-fg">{firstName}</span>. {continuing.length > 0 ? "Que bom te ver de volta." : "Que tal começar um curso hoje?"}
+          </p>
         )}
 
-        {noCourses ? (
-          <EmptyState
-            icon={canCreate ? BookPlus : Sparkles}
-            title="Os primeiros cursos estão sendo preparados"
-            description={
-              canCreate
-                ? "Crie um curso, adicione módulos e aulas e publique. Ele aparece aqui automaticamente."
-                : "Em breve você encontrará aqui os cursos da Escola. Crie sua conta para ser avisado quando abrirem."
-            }
-            action={
-              canCreate ? (
-                <Button asChild>
-                  <Link href="/teacher/courses/new">Criar o primeiro curso</Link>
-                </Button>
-              ) : !user ? (
-                <Button asChild>
-                  <Link href="/register">Criar conta gratuita</Link>
-                </Button>
-              ) : undefined
-            }
+        {slides.length > 1 ? (
+          <HeroCarousel
+            title={general.platformName}
+            labels={slides.map((b) => b.title)}
+            slides={slides.map((b, i) => (
+              <HomeHero key={i} banner={b} course={showcase.heroes[i] ?? null} heading="h2" headingId={`hero-title-${i}`} />
+            ))}
           />
         ) : (
-          <>
-            {s.featured && showcase.featured.length > 0 && (
-              <HomeSection
-                id="destaques"
-                eyebrow={isNewcomer ? "Comece por aqui" : "Em destaque"}
-                title={isNewcomer ? "Cursos escolhidos para começar bem" : "Selecionados pela coordenação"}
-                description="Toque em um curso para ver os detalhes e se inscrever."
-                action={{ href: "/courses", label: "Ver catálogo" }}
-              >
-                <CourseShowcase courses={showcase.featured} loggedIn={loggedIn} idPrefix="featured" />
-              </HomeSection>
-            )}
-
-            {s.categories && (
-              <HomeSection id="areas" eyebrow="Explore" title="Encontre seu próximo curso por área" description="Filtre por área de estudo; os mais procurados aparecem primeiro.">
-                <CategoryExplorer areas={areas} courses={showcase.catalog} total={total} loggedIn={loggedIn} />
-              </HomeSection>
-            )}
-          </>
+          <HomeHero banner={slides[0]} course={showcase.heroes[0] ?? null} />
         )}
 
-        {isNewcomer && (
-          <HomeSection id="como-funciona" eyebrow="Como funciona" title="Do primeiro clique ao certificado">
-            <HowItWorks benefits={s.benefits ? home.benefits : []} autoCertificate={courseSettings.autoIssueCertificates} />
-          </HomeSection>
-        )}
+        <div className="mt-14 space-y-16 lg:mt-16 lg:space-y-20">
+          {continuing.length > 0 && (
+            <HomeSection id="continuar" eyebrow="Seu aprendizado" title="Continue de onde parou" action={{ href: "/my-courses", label: "Meus cursos" }}>
+              <ContinueLearning items={continuing} />
+            </HomeSection>
+          )}
 
-        {s.teachers && teachers.length > 0 && (
-          <HomeSection id="professores" eyebrow="Quem ensina" title="Professores da Escola">
-            <TeachersStrip teachers={teachers} />
-          </HomeSection>
-        )}
+          {noCourses ? (
+            <EmptyState
+              icon={canCreate ? BookPlus : Sparkles}
+              title="Os primeiros cursos estão sendo preparados"
+              description={
+                canCreate
+                  ? "Crie um curso, adicione módulos e aulas e publique. Ele aparece aqui automaticamente."
+                  : "Em breve você encontrará aqui os cursos da Escola. Crie sua conta para ser avisado quando abrirem."
+              }
+              action={
+                canCreate ? (
+                  <Button asChild>
+                    <Link href="/teacher/courses/new">Criar o primeiro curso</Link>
+                  </Button>
+                ) : !user ? (
+                  <Button asChild>
+                    <Link href="/register">Criar conta gratuita</Link>
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : (
+            <>
+              {s.featured && showcase.featured.length > 0 && (
+                <HomeSection
+                  id="destaques"
+                  eyebrow={isNewcomer ? "Comece por aqui" : "Em destaque"}
+                  title={isNewcomer ? "Cursos escolhidos para começar bem" : "Selecionados pela coordenação"}
+                  description="Passe o mouse sobre um curso para ver a prévia da primeira aula."
+                  action={{ href: "/courses", label: "Ver catálogo" }}
+                >
+                  <CourseShowcase courses={showcase.featured} loggedIn={loggedIn} idPrefix="featured" />
+                </HomeSection>
+              )}
 
-        {s.testimonials && home.testimonials.length > 0 && (
-          <HomeSection id="depoimentos" eyebrow="Depoimentos" title="Quem estuda, recomenda">
-            <Testimonials items={home.testimonials} />
-          </HomeSection>
-        )}
+              {s.categories && (
+                <HomeSection id="areas" eyebrow="Explore" title="Encontre seu próximo curso por área" description="Filtre por área de estudo; os mais procurados aparecem primeiro.">
+                  <CategoryExplorer areas={areas} courses={showcase.catalog} total={total} loggedIn={loggedIn} />
+                </HomeSection>
+              )}
+            </>
+          )}
 
-        {s.cta && !user && (
-          <section aria-labelledby="cta-title" className="flex flex-col items-start justify-between gap-6 rounded-2xl border border-border bg-surface p-6 sm:p-8 md:flex-row md:items-center">
-            <div className="max-w-xl">
-              <h2 id="cta-title" className="font-display text-[1.75rem] leading-tight tracking-tight text-balance">
-                {home.ctaTitle}
-              </h2>
-              <p className="mt-2 text-muted">{home.ctaText}</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg" className="group">
-                <Link href="/register">
-                  Criar minha conta <ArrowRight className="transition-transform duration-200 group-hover:translate-x-0.5" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="ghost">
-                <Link href="/login">Já tenho conta</Link>
-              </Button>
-            </div>
-          </section>
-        )}
+          {isNewcomer && (
+            <HomeSection id="como-funciona" eyebrow="Como funciona" title="Do primeiro clique ao certificado">
+              <HowItWorks benefits={s.benefits ? home.benefits : []} autoCertificate={courseSettings.autoIssueCertificates} />
+            </HomeSection>
+          )}
+
+          {s.teachers && teachers.length > 0 && (
+            <HomeSection id="professores" eyebrow="Quem ensina" title="Professores da Escola">
+              <TeachersStrip teachers={teachers} />
+            </HomeSection>
+          )}
+
+          {s.testimonials && home.testimonials.length > 0 && (
+            <HomeSection id="depoimentos" eyebrow="Depoimentos" title="Quem estuda, recomenda">
+              <Testimonials items={home.testimonials} />
+            </HomeSection>
+          )}
+
+          {s.cta && !user && (
+            <section aria-labelledby="cta-title" className="flex flex-col items-start justify-between gap-6 rounded-2xl border border-border bg-surface p-6 sm:p-8 md:flex-row md:items-center">
+              <div className="max-w-xl">
+                <h2 id="cta-title" className="font-display text-[1.75rem] leading-tight tracking-tight text-balance">
+                  {home.ctaTitle}
+                </h2>
+                <p className="mt-2 text-muted">{home.ctaText}</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild size="lg" className="group">
+                  <Link href="/register">
+                    Criar minha conta <ArrowRight className="transition-transform duration-200 group-hover:translate-x-0.5" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="ghost">
+                  <Link href="/login">Já tenho conta</Link>
+                </Button>
+              </div>
+            </section>
+          )}
+        </div>
       </div>
     </div>
   );
