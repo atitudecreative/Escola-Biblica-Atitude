@@ -100,8 +100,8 @@ export function AppShell({
       {/* Gaveta (celular): navegação completa com rótulos */}
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerContent side="left" title="Menu" hideHeader className="w-[84vw] max-w-[300px]">
-          <div className="flex h-15 items-center px-5">
-            <Logo name={brand.name} logoUrl={brand.logoUrl} />
+          <div className="flex h-24 items-center justify-center px-5">
+            <Logo name={brand.name} logoUrl={brand.logoUrl} className="[&>span]:h-14" />
           </div>
           <SidebarNav sections={sections} counts={counts} onNavigate={() => setOpen(false)} />
           {user ? (
