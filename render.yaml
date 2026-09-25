@@ -57,10 +57,15 @@ services:
         sync: false
       - key: ADMIN_NAME
         sync: false
-      # E-mail: "log" grava na caixa de saída (Admin › Logs) sem enviar; use "resend" ou "smtp" para enviar.
+      # E-mail — configure no painel do Render (Environment); o Blueprint não sobrescreve estes valores.
+      #   EMAIL_PROVIDER: "log" (padrão: grava na caixa de saída, Admin › Logs, sem enviar), "resend" ou "smtp"
+      #   EMAIL_FROM: remetente do domínio verificado, ex.: Escola Bíblica Atitude <nao-responda@ibatitude.com.br>
+      #   RESEND_API_KEY (com "resend") ou SMTP_URL (com "smtp", ex.: smtps://usuario:senha@host:465)
       - key: EMAIL_PROVIDER
-        value: log
+        sync: false
       - key: EMAIL_FROM
-        value: Escola Bíblica Atitude <nao-responda@ibatitude.com.br>
+        sync: false
       - key: RESEND_API_KEY
+        sync: false
+      - key: SMTP_URL
         sync: false
