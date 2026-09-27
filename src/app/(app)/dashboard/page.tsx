@@ -104,7 +104,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           <h2 id="continuar" className="sr-only">Continue estudando</h2>
           <div className="grid overflow-hidden rounded-2xl border border-border bg-surface shadow-sm md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
             <Link href={`/courses/${primary.course.slug}`} className="relative block">
-              <CourseCover title={primary.course.title} category={primary.course.category?.name} tone={primary.course.category?.position} size="lg" className="h-full min-h-48" />
+              <CourseCover title={primary.course.title} category={primary.course.category?.name} tone={primary.course.category?.position} src={primary.course.coverUrl} size="lg" className="h-full min-h-48" />
             </Link>
             <div className="flex flex-col p-5 sm:p-7">
               <p className="text-overline text-primary">Continue de onde parou</p>
